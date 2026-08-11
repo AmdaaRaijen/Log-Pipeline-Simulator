@@ -1,69 +1,180 @@
-import Image from "next/image";
+"use client";
+import React, { useState } from "react";
+import MonacoEditor from "../components/editor/MonacoEditor";
+import ResultPanel from "../components/simulator/ResultPanel";
+import type { SimulationResult } from "../lib/evaluator/engine";
+import { Play } from "lucide-react";
+
+const DEFAULT_LOG = JSON.stringify(
+  {
+    _source: {
+      model: "Scanned Malware Detection",
+      indicators: {
+        value: "PAK_Generic.001",
+      },
+    },
+  },
+  null,
+  2,
+);
+
+const DEFAULT_CONFIG = `filter {
+  if [indicators][value] =~ /\\/opt\\/metasploit-framework\\/data\\// {
+    mutate { add_field => { "whitelisted" => "true", "whitelistId" => "1" } }
+  } else if [model] == "Network Sniffing" {
+    mutate { add_field => { "whitelisted" => "true", "whitelistId" => "3" } }
+  } else if [model] == "Scanned Malware Detection" and [indicators][value] =~ /(?i)^C:\\\\Program Files \\(x86\\)\\\\nxlog\\\\/ {
+    mutate { add_field => { "whitelisted" => "true", "whitelistId" => "6" } }
+  }
+}`;
+
+const DEFAULT_VECTOR_LOG = JSON.stringify({
+  "last_action": "SOMETHING_ELSE",
+  "description": "Script contains suspicious features.",
+  "path": "C:\\\\Scripts\\\\CL_Utility.ps1",
+  "process_chain": [
+    { "command": "powershell.exe -Command ... HKLM:\\\\SOFTWARE\\\\Microsoft\\\\CTF\\\\TIP ..." },
+    { "command": "CompatTelRunner.exe -m:appraiser.dll" }
+  ]
+}, null, 2);
+
+const DEFAULT_VECTOR_CONFIG = `# Whitelist 1
+if !exists(.whitelisted) && (.last_action == "DELETE_SUCCESS" || .last_action == "QUARANTINE_SUCCESS") {
+    .whitelisted = "true"
+    .whitelistID = "1"
+}
+
+# Whitelist 2
+# if !exists(.whitelisted) && (.description == "Script contains suspicious features.") {
+#     .whitelisted = "true"
+#     .whitelistID = "disabled"
+# }
+
+# Whitelist 3
+if !exists(.whitelisted) && (.description == "Script contains suspicious features.") && contains(to_string!(.path), "CL_Utility.ps1") {
+    .whitelisted = "true"
+    .whitelistID = "2"
+}
+
+# Whitelist 4
+if !exists(.whitelisted) && match(to_string!(.process_chain[1].command), r'(?i)CompatTelRunner\\.exe...') {
+    .whitelisted = "true"
+    .whitelistID = "3"
+}`;
 
 export default function Home() {
+  const [engine, setEngine] = useState<"logstash" | "vector">("logstash");
+  const [rawlog, setRawlog] = useState<string>(DEFAULT_LOG);
+  const [config, setConfig] = useState<string>(DEFAULT_CONFIG);
+  
+  const [vectorRawlog, setVectorRawlog] = useState<string>(DEFAULT_VECTOR_LOG);
+  const [vectorConfig, setVectorConfig] = useState<string>(DEFAULT_VECTOR_CONFIG);
+
+  const [result, setResult] = useState<SimulationResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const activeRawLog = engine === "logstash" ? rawlog : vectorRawlog;
+  const setActiveRawLog = engine === "logstash" ? setRawlog : setVectorRawlog;
+  const activeConfig = engine === "logstash" ? config : vectorConfig;
+  const setActiveConfig = engine === "logstash" ? setConfig : setVectorConfig;
+
+  const runSimulation = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/simulate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          engine,
+          rawlog: activeRawLog,
+          pipelineConfig: activeConfig,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        let errMsg = data.error || "Simulation failed";
+        if (data.message) errMsg += ": " + data.message;
+        throw new Error(errMsg);
+      }
+
+      setResult(data);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
+    <div className="flex flex-col h-screen bg-black text-gray-200 font-sans">
+      {/* Top Navbar */}
+      <div className="h-12 bg-gray-900 border-b border-gray-800 flex items-center justify-between px-4">
+        <div className="flex items-center space-x-4">
+          <h1 className="font-bold text-white tracking-wide">
+            Exclude Simulator (v1)
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
+          <div className="flex space-x-1 bg-gray-800 p-1 rounded-md">
+             <button onClick={() => { setEngine("logstash"); setResult(null); }} className={`px-3 py-1 text-xs font-semibold rounded ${engine === "logstash" ? "bg-blue-600 text-white" : "text-gray-400 hover:text-white"}`}>Logstash</button>
+             <button onClick={() => { setEngine("vector"); setResult(null); }} className={`px-3 py-1 text-xs font-semibold rounded ${engine === "vector" ? "bg-blue-600 text-white" : "text-gray-400 hover:text-white"}`}>Vector (VRL)</button>
+          </div>
+          <div className="h-4 w-px bg-gray-700"></div>
           <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            href="/filter"
+            className="flex items-center text-gray-400 hover:text-white transition-colors text-sm"
           >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
+            Filter Simulator (v2) &rarr;
+          </a>
+        </div>
+      </div>
+
+      <div className="flex flex-1 overflow-hidden">
+        <div className="w-1/3 flex flex-col border-r border-gray-800">
+          <div className="p-3 bg-gray-950 border-b border-gray-800 text-sm font-semibold flex justify-between items-center text-gray-400">
+            Raw Log (JSON)
+          </div>
+          <div className="flex-1 overflow-hidden p-2">
+            <MonacoEditor
+              value={activeRawLog}
+              onChange={(v) => setActiveRawLog(v || "")}
+              language="json"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+          </div>
         </div>
-      </main>
+
+        <div className="w-1/3 flex flex-col border-r border-gray-800">
+          <div className="p-3 bg-gray-950 border-b border-gray-800 text-sm font-semibold flex justify-between items-center text-gray-400">
+            Pipeline Config ({engine === "logstash" ? "Logstash" : "VRL"})
+          </div>
+          <div className="flex-1 overflow-hidden p-2">
+            <MonacoEditor
+              value={activeConfig}
+              onChange={(v) => setActiveConfig(v || "")}
+              language={engine === "logstash" ? "ruby" : "rust"}
+            />
+          </div>
+        </div>
+
+        <div className="w-1/3 flex flex-col">
+          <div className="p-3 bg-gray-950 border-b border-gray-800 font-semibold flex justify-between items-center text-gray-300">
+            Simulation Result
+            <button
+              onClick={runSimulation}
+              disabled={isLoading}
+              className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-md text-sm font-medium transition-colors disabled:opacity-50 cursor-pointer"
+            >
+              <Play className="h-4 w-4" />
+              <span>Simulate</span>
+            </button>
+          </div>
+          <div className="flex-1 overflow-hidden">
+            <ResultPanel result={result} error={error} isLoading={isLoading} />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
