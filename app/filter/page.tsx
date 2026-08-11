@@ -86,11 +86,11 @@ export default function FilterSimulator() {
             href="/"
             className="flex items-center text-gray-400 hover:text-white transition-colors text-sm"
           >
-            <ArrowLeft className="h-4 w-4 mr-1" /> Exclude Simulator (v1)
+            <ArrowLeft className="h-4 w-4 mr-1" /> Exclude Simulator
           </Link>
           <div className="h-4 w-px bg-gray-700"></div>
           <h1 className="font-bold text-white tracking-wide">
-            Filter Simulator (v2)
+            Filter Simulator
           </h1>
         </div>
         <div className="flex items-center space-x-4">

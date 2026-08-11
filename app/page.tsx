@@ -3,7 +3,8 @@ import React, { useState } from "react";
 import MonacoEditor from "../components/editor/MonacoEditor";
 import ResultPanel from "../components/simulator/ResultPanel";
 import type { SimulationResult } from "../lib/evaluator/engine";
-import { Play } from "lucide-react";
+import { Bot, Play } from "lucide-react";
+import Link from "next/link";
 
 const DEFAULT_LOG = JSON.stringify(
   {
@@ -28,15 +29,22 @@ const DEFAULT_CONFIG = `filter {
   }
 }`;
 
-const DEFAULT_VECTOR_LOG = JSON.stringify({
-  "last_action": "SOMETHING_ELSE",
-  "description": "Script contains suspicious features.",
-  "path": "C:\\\\Scripts\\\\CL_Utility.ps1",
-  "process_chain": [
-    { "command": "powershell.exe -Command ... HKLM:\\\\SOFTWARE\\\\Microsoft\\\\CTF\\\\TIP ..." },
-    { "command": "CompatTelRunner.exe -m:appraiser.dll" }
-  ]
-}, null, 2);
+const DEFAULT_VECTOR_LOG = JSON.stringify(
+  {
+    last_action: "SOMETHING_ELSE",
+    description: "Script contains suspicious features.",
+    path: "C:\\\\Scripts\\\\CL_Utility.ps1",
+    process_chain: [
+      {
+        command:
+          "powershell.exe -Command ... HKLM:\\\\SOFTWARE\\\\Microsoft\\\\CTF\\\\TIP ...",
+      },
+      { command: "CompatTelRunner.exe -m:appraiser.dll" },
+    ],
+  },
+  null,
+  2,
+);
 
 const DEFAULT_VECTOR_CONFIG = `# Whitelist 1
 if !exists(.whitelisted) && (.last_action == "DELETE_SUCCESS" || .last_action == "QUARANTINE_SUCCESS") {
@@ -66,9 +74,11 @@ export default function Home() {
   const [engine, setEngine] = useState<"logstash" | "vector">("logstash");
   const [rawlog, setRawlog] = useState<string>(DEFAULT_LOG);
   const [config, setConfig] = useState<string>(DEFAULT_CONFIG);
-  
+
   const [vectorRawlog, setVectorRawlog] = useState<string>(DEFAULT_VECTOR_LOG);
-  const [vectorConfig, setVectorConfig] = useState<string>(DEFAULT_VECTOR_CONFIG);
+  const [vectorConfig, setVectorConfig] = useState<string>(
+    DEFAULT_VECTOR_CONFIG,
+  );
 
   const [result, setResult] = useState<SimulationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -115,20 +125,43 @@ export default function Home() {
       <div className="h-12 bg-gray-900 border-b border-gray-800 flex items-center justify-between px-4">
         <div className="flex items-center space-x-4">
           <h1 className="font-bold text-white tracking-wide">
-            Exclude Simulator (v1)
+            Exclude Simulator
           </h1>
           <div className="flex space-x-1 bg-gray-800 p-1 rounded-md">
-             <button onClick={() => { setEngine("logstash"); setResult(null); }} className={`px-3 py-1 text-xs font-semibold rounded ${engine === "logstash" ? "bg-blue-600 text-white" : "text-gray-400 hover:text-white"}`}>Logstash</button>
-             <button onClick={() => { setEngine("vector"); setResult(null); }} className={`px-3 py-1 text-xs font-semibold rounded ${engine === "vector" ? "bg-blue-600 text-white" : "text-gray-400 hover:text-white"}`}>Vector (VRL)</button>
+            <button
+              onClick={() => {
+                setEngine("logstash");
+                setResult(null);
+              }}
+              className={`px-3 py-1 text-xs font-semibold rounded ${engine === "logstash" ? "bg-blue-600 text-white" : "text-gray-400 hover:text-white"}`}
+            >
+              Logstash
+            </button>
+            <button
+              onClick={() => {
+                setEngine("vector");
+                setResult(null);
+              }}
+              className={`px-3 py-1 text-xs font-semibold rounded ${engine === "vector" ? "bg-blue-600 text-white" : "text-gray-400 hover:text-white"}`}
+            >
+              Vector (VRL)
+            </button>
           </div>
           <div className="h-4 w-px bg-gray-700"></div>
           <a
             href="/filter"
-            className="flex items-center text-gray-400 hover:text-white transition-colors text-sm"
+            className="flex items-center text-blue-400 hover:text-white transition-colors text-sm"
           >
-            Filter Simulator (v2) &rarr;
+            Parser Simulator &rarr;
           </a>
         </div>
+        <Link
+          href="/auto-whitelist"
+          className="flex items-center space-x-2 bg-green-600 hover:bg-green-500 text-white px-3 py-1.5 rounded-md text-sm font-medium transition-colors disabled:opacity-50 cursor-pointer"
+        >
+          <Bot className="h-4 w-4" />
+          <span>Auto Whitelist Creator</span>
+        </Link>
       </div>
 
       <div className="flex flex-1 overflow-hidden">
