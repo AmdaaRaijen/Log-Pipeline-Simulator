@@ -46,9 +46,14 @@ export async function POST(request: Request) {
         const result = vrlEngine.run(initialEvent);
 
         const matchedRuleTrace = result.trace.find((t) => t.matched);
+        const body = result.finalEvent?.body as any;
+
+        const rawWhitelisted = body?.whitelisted ?? body?._source?.whitelisted;
+
         const isWhitelisted =
-          ((result.finalEvent.body as any)._source?.whitelisted === "true" ||
-            (result.finalEvent.body as any)._source?.whitelisted === true);
+          rawWhitelisted === true ||
+          rawWhitelisted === "true" ||
+          String(rawWhitelisted).toLowerCase() === "true";
 
         return NextResponse.json({
           matched: isWhitelisted,
