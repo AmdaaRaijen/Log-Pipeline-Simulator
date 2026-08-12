@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { formatCode } from "../../../lib/utils/formatter";
 import {
   flattenForPrompt,
   lintForOverBroadRule,
@@ -245,10 +246,13 @@ ${exampleWhitelist ? `Contoh whitelist (gaya yang diikuti): ${exampleWhitelist}`
       });
 
       if (isWhitelisted) {
+        // Format the snippet before returning it to the user
+        const finalSnippet = formatCode(parsed.data.snippet, engine as "logstash" | "vector");
+        
         return NextResponse.json({
           success: true,
           verified: true,
-          finalSnippet: parsed.data.snippet,
+          finalSnippet,
           explanation: parsed.data.explanation,
           warnings: lintWarnings,
           attempts,
