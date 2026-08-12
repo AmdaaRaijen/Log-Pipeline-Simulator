@@ -24,8 +24,12 @@ export type Rule = {
   branchIndex: number;
 };
 
+export type IfBlock = {
+  branches: Rule[]; // if, else if, else branches within a single block
+};
+
 export type ParsedPipeline = {
-  filters: Rule[]; // executed top-down, stops at first match (if/else-if semantics)
+  ifBlocks: IfBlock[]; // Executed top-down. Each block evaluates independently.
 };
 
 // V2 Filter Plugins AST (Filter Simulator)

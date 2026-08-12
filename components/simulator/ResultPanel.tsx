@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from 'react';
-import { CheckCircle, XCircle, ChevronDown, ChevronRight } from 'lucide-react';
+import { CheckCircle, XCircle, ChevronDown, ChevronRight, AlertTriangle } from 'lucide-react';
 import type { SimulationResult, TraceEntry } from '../../lib/evaluator/engine';
 
 type ResultPanelProps = {
@@ -31,7 +31,7 @@ export default function ResultPanel({ result, error, isLoading }: ResultPanelPro
     return <div className="h-full flex items-center justify-center text-gray-500">Run simulation to see results here.</div>;
   }
 
-  const { matched, evaluationTrace, resultEvent, matchedRule } = result;
+  const { matched, evaluationTrace, resultEvent, matchedRule, warnings } = result;
 
   return (
     <div className="h-full flex flex-col bg-gray-900 text-gray-200 p-4 overflow-y-auto">
@@ -44,6 +44,17 @@ export default function ResultPanel({ result, error, isLoading }: ResultPanelPro
           )}
         </div>
       </div>
+
+      {warnings && warnings.length > 0 && (
+        <div className="mb-6 space-y-2">
+          {warnings.map((warn: string, idx: number) => (
+            <div key={idx} className="p-3 bg-yellow-950 border border-yellow-800 rounded-md flex items-start text-yellow-300 text-sm">
+              <AlertTriangle className="mr-2 h-5 w-5 flex-shrink-0" />
+              <span>{warn}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="mb-6">
         <h3 className="text-lg font-semibold mb-3 border-b border-gray-700 pb-2">Evaluation Trace</h3>

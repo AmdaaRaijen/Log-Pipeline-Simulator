@@ -11,6 +11,7 @@ export type SimulationResult = {
   matchedRule: { branchIndex: number; sourceLine: number } | null;
   evaluationTrace: TraceEntry[];
   resultEvent: any;
+  warnings?: string[];
 };
 
 export class Evaluator {
@@ -37,6 +38,18 @@ export class Evaluator {
   }
 
   private setFieldValue(path: string, value: any) {
+    const applyValue = (current: any, key: string) => {
+      if (current[key] !== undefined) {
+        if (Array.isArray(current[key])) {
+          current[key].push(value);
+        } else {
+          current[key] = [current[key], value];
+        }
+      } else {
+        current[key] = value;
+      }
+    };
+
     if (path.startsWith("[") && path.endsWith("]")) {
       const keys = path.split(/\]\[|\[|\]/).filter(Boolean);
       let current = this.event;
@@ -44,9 +57,9 @@ export class Evaluator {
         if (!current[keys[i]]) current[keys[i]] = {};
         current = current[keys[i]];
       }
-      current[keys[keys.length - 1]] = value;
+      applyValue(current, keys[keys.length - 1]);
     } else {
-      this.event[path] = value;
+      applyValue(this.event, path);
     }
   }
 
@@ -150,50 +163,72 @@ export class Evaluator {
   }
 
   public simulate(pipeline: ParsedPipeline): SimulationResult {
-    let matchedRule: Rule | null = null;
+    let firstMatchedRule: Rule | null = null;
     let matched = false;
+    let warnings: string[] = [];
 
-    for (const rule of pipeline.filters) {
-      if (rule.condition === null) {
+    for (const block of pipeline.ifBlocks) {
+      let blockMatchedRule: Rule | null = null;
+
+      for (const rule of block.branches) {
+        if (rule.condition === null) {
+          this.trace.push({
+            branchIndex: rule.branchIndex,
+            matched: true,
+            reason: "Else branch (no condition)"
+          });
+          blockMatchedRule = rule;
+          matched = true;
+          break; // break out of this IfBlock
+        }
+
+        const { result, reason } = this.evaluateCondition(rule.condition);
         this.trace.push({
           branchIndex: rule.branchIndex,
-          matched: true,
-          reason: "Else branch (no condition)"
+          matched: result,
+          reason
         });
-        matchedRule = rule;
-        matched = true;
-        break;
+
+        if (result) {
+          blockMatchedRule = rule;
+          matched = true;
+          break; // break out of this IfBlock
+        }
       }
 
-      const { result, reason } = this.evaluateCondition(rule.condition);
-      this.trace.push({
-        branchIndex: rule.branchIndex,
-        matched: result,
-        reason
-      });
-
-      if (result) {
-        matchedRule = rule;
-        matched = true;
-        break;
-      }
-    }
-
-    if (matchedRule) {
-      for (const action of matchedRule.actions) {
-        if (action.type === "addField") {
-          for (const [k, v] of Object.entries(action.fields)) {
-            this.setFieldValue(k, v);
+      if (blockMatchedRule) {
+        if (!firstMatchedRule) {
+          firstMatchedRule = blockMatchedRule;
+        }
+        for (const action of blockMatchedRule.actions) {
+          if (action.type === "addField") {
+            for (const [k, v] of Object.entries(action.fields)) {
+              this.setFieldValue(k, v);
+            }
           }
         }
       }
     }
 
+    // Check for whitelist array warning
+    let whitelistVal = this.event["whitelist"];
+    if (whitelistVal === undefined && this.event._source) {
+      whitelistVal = this.event._source["whitelist"];
+    }
+    
+    if (Array.isArray(whitelistVal) && whitelistVal.length > 1) {
+      warnings.push(
+        "Peringatan: Field `whitelist` berubah menjadi Array karena ada beberapa blok `if` yang match secara bersamaan. " +
+        "Jika ini bukan yang Anda harapkan, pertimbangkan untuk mengubah multiple `if` menjadi `if { ... } else if { ... }` agar hanya 1 rule yang dieksekusi."
+      );
+    }
+
     return {
       matched,
-      matchedRule: matchedRule ? { branchIndex: matchedRule.branchIndex, sourceLine: matchedRule.sourceLine } : null,
+      matchedRule: firstMatchedRule ? { branchIndex: firstMatchedRule.branchIndex, sourceLine: firstMatchedRule.sourceLine } : null,
       evaluationTrace: this.trace,
-      resultEvent: this.event
+      resultEvent: this.event,
+      warnings: warnings.length > 0 ? warnings : undefined
     };
   }
 }

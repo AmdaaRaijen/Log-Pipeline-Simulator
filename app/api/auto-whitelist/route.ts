@@ -55,7 +55,10 @@ export async function POST(request: Request) {
     const parsedRawlog =
       typeof rawlog === "string" ? JSON.parse(rawlog) : rawlog;
     const eventRoot = resolveEventRoot(parsedRawlog);
-    const flattenedPaths = flattenForPrompt(eventRoot, engine as "logstash" | "vector");
+    const flattenedPaths = flattenForPrompt(
+      eventRoot,
+      engine as "logstash" | "vector",
+    );
 
     let systemPrompt = `Kamu adalah asisten pembuat rule whitelist untuk SIEM pipeline (${engine === "logstash" ? "Logstash conditional filter" : "Vector VRL"}).
 
@@ -198,7 +201,7 @@ ${exampleWhitelist ? `Contoh whitelist (gaya yang diikuti): ${exampleWhitelist}`
           // Vector
           const payloadStr = JSON.stringify(parsedRawlog);
           const vrlResult = evaluate_vrl(snippet, payloadStr);
-          
+
           if (!vrlResult.success) {
             throw new Error(vrlResult.output); // Throw so it's caught as parse error
           }
@@ -218,9 +221,9 @@ ${exampleWhitelist ? `Contoh whitelist (gaya yang diikuti): ${exampleWhitelist}`
             _source.whitelisted === "true" || _source.whitelisted === true;
 
           if (isWhitelisted) {
-            // Note: AST linting for vector is tricky without a JS AST, 
+            // Note: AST linting for vector is tricky without a JS AST,
             // but we can skip overbroad checks for Vector since we don't have JS AST
-            lintWarnings = []; 
+            lintWarnings = [];
           }
         }
       } catch (err: any) {
@@ -247,8 +250,11 @@ ${exampleWhitelist ? `Contoh whitelist (gaya yang diikuti): ${exampleWhitelist}`
 
       if (isWhitelisted) {
         // Format the snippet before returning it to the user
-        const finalSnippet = formatCode(parsed.data.snippet, engine as "logstash" | "vector");
-        
+        const finalSnippet = formatCode(
+          parsed.data.snippet,
+          engine as "logstash" | "vector",
+        );
+
         return NextResponse.json({
           success: true,
           verified: true,

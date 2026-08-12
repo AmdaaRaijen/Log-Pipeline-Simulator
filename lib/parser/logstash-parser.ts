@@ -1,4 +1,4 @@
-import { Token, ParsedPipeline, Rule, Condition, FieldPath, MutateAction, ParsedFilterPipeline, Stage, PluginConfig } from "./types";
+import { Token, ParsedPipeline, Rule, Condition, FieldPath, MutateAction, ParsedFilterPipeline, Stage, PluginConfig, IfBlock } from "./types";
 
 export class ParseError extends Error {
   constructor(message: string, public line: number, public column: number) {
@@ -52,7 +52,9 @@ export class LogstashParser {
       wrappedInFilter = true;
     }
 
+    const ifBlocks: IfBlock[] = [];
     let branchIndex = 0;
+
     while (!this.isAtEnd()) {
       if (wrappedInFilter && this.peek().type === "Punctuation" && this.peek().value === "}") {
         break;
@@ -60,8 +62,9 @@ export class LogstashParser {
       
       const token = this.peek();
       if (token.type === "Keyword" && token.value === "if") {
-        this.parseIfBlock(filters, branchIndex);
-        branchIndex = filters.length;
+        const block = this.parseIfBlock(branchIndex);
+        ifBlocks.push(block);
+        branchIndex += block.branches.length;
       } else {
         this.advance();
       }
@@ -71,10 +74,11 @@ export class LogstashParser {
       this.consume("Punctuation", "}", "Expected '}' at end of filter block");
     }
 
-    return { filters };
+    return { ifBlocks };
   }
 
-  private parseIfBlock(filters: Rule[], branchIndex: number) {
+  private parseIfBlock(branchIndex: number): IfBlock {
+    const branches: Rule[] = [];
     this.consume("Keyword", "if", "Expected 'if'");
     const sourceLine = this.peek().line;
     const condition = this.parseCondition();
@@ -82,7 +86,7 @@ export class LogstashParser {
     const actions = this.parseActions();
     this.consume("Punctuation", "}", "Expected '}' after actions");
     
-    filters.push({ condition, actions, sourceLine, branchIndex });
+    branches.push({ condition, actions, sourceLine, branchIndex });
     branchIndex++;
 
     while (this.match("Keyword", "else")) {
@@ -92,16 +96,18 @@ export class LogstashParser {
         this.consume("Punctuation", "{", "Expected '{' after else if condition");
         const elseIfActions = this.parseActions();
         this.consume("Punctuation", "}", "Expected '}' after else if actions");
-        filters.push({ condition: elseIfCondition, actions: elseIfActions, sourceLine: elseLine, branchIndex });
+        branches.push({ condition: elseIfCondition, actions: elseIfActions, sourceLine: elseLine, branchIndex });
         branchIndex++;
       } else {
         this.consume("Punctuation", "{", "Expected '{' after else");
         const elseActions = this.parseActions();
         this.consume("Punctuation", "}", "Expected '}' after else actions");
-        filters.push({ condition: null, actions: elseActions, sourceLine: elseLine, branchIndex });
+        branches.push({ condition: null, actions: elseActions, sourceLine: elseLine, branchIndex });
         break;
       }
     }
+    
+    return { branches };
   }
 
   // --- V2 Parse Sequential Filter Pipeline ---

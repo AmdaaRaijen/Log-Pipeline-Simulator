@@ -106,7 +106,7 @@ export function lintForOverBroadRule(
 
   if (engine === "logstash") {
     const lsPipeline = pipeline as ParsedPipeline;
-    const cond = lsPipeline.filters[0]?.condition;
+    const cond = lsPipeline.ifBlocks[0]?.branches[0]?.condition;
     if (cond) {
       countLsFields(cond).forEach(f => fields.add(f));
     }
