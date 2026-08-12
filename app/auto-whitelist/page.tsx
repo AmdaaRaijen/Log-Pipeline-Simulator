@@ -10,7 +10,9 @@ import {
   ChevronDown,
   ChevronRight,
   Copy,
+  Wand2,
 } from "lucide-react";
+import { formatCode } from "../../lib/utils/formatter";
 
 const DEFAULT_LOG = JSON.stringify(
   {
@@ -131,12 +133,20 @@ export default function AutoWhitelist() {
             <span className="text-sm font-semibold text-gray-400">
               Raw Input (JSON)
             </span>
-            <button
-              onClick={() => setShowPaths(!showPaths)}
-              className="text-xs px-2 py-1 bg-gray-800 hover:bg-gray-700 rounded text-gray-300"
-            >
-              {showPaths ? "Tutup Field Paths" : "Lihat Field Paths"}
-            </button>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => setRawlog(formatCode(rawlog, "json"))}
+                className="text-xs px-2 py-1 bg-gray-800 hover:bg-gray-700 rounded text-gray-300 flex items-center"
+              >
+                <Wand2 className="h-3 w-3 mr-1" /> Format
+              </button>
+              <button
+                onClick={() => setShowPaths(!showPaths)}
+                className="text-xs px-2 py-1 bg-gray-800 hover:bg-gray-700 rounded text-gray-300"
+              >
+                {showPaths ? "Tutup Field Paths" : "Lihat Field Paths"}
+              </button>
+            </div>
           </div>
 
           {showPaths && (

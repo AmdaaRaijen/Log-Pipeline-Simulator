@@ -5,12 +5,8 @@ import {
   ParseError,
 } from "../../../lib/parser/logstash-parser";
 import { Evaluator } from "../../../lib/evaluator/engine";
-import {
-  parseVrlScript,
-  ParseError as VrlParseError,
-} from "../../../lib/vrl/parser";
-import { VrlEngine } from "../../../lib/vrl/engine";
 import { LogEvent } from "../../../lib/evaluator/helpers";
+import { evaluate_vrl } from "../../../lib/vrl-wasm-pkg/vrl_wasm";
 
 export async function POST(request: Request) {
   try {
@@ -35,20 +31,23 @@ export async function POST(request: Request) {
 
     if (engine === "vector") {
       try {
-        const pipeline = parseVrlScript(pipelineConfig);
-        const initialEvent: LogEvent = {
-          __id: "1",
-          metadata: {},
-          body: parsedRawlog,
-        };
+        const payloadStr = JSON.stringify(parsedRawlog);
+        // evaluate_vrl is synchronous and returns VrlResult
+        const vrlResult = evaluate_vrl(pipelineConfig, payloadStr);
 
-        const vrlEngine = new VrlEngine(pipeline, practicalMode);
-        const result = vrlEngine.run(initialEvent);
+        if (!vrlResult.success) {
+          return NextResponse.json(
+            {
+              error: "VrlParseError",
+              message: vrlResult.output, // The exact rust error [E110] etc
+            },
+            { status: 400 },
+          );
+        }
 
-        const matchedRuleTrace = result.trace.find((t) => t.matched);
-        const body = result.finalEvent?.body as any;
+        const outBody = JSON.parse(vrlResult.output);
 
-        const rawWhitelisted = body?.whitelisted ?? body?._source?.whitelisted;
+        const rawWhitelisted = outBody?.whitelisted ?? outBody?._source?.whitelisted;
 
         const isWhitelisted =
           rawWhitelisted === true ||
@@ -57,37 +56,24 @@ export async function POST(request: Request) {
 
         return NextResponse.json({
           matched: isWhitelisted,
-          evaluationTrace: result.trace.map((t) => ({
-            matched: t.matched,
-            branchIndex: `Line ${t.sourceLine}${t.skipped ? " (DISABLED)" : ""}`,
-            reason: t.error
-              ? `Error: ${t.error}`
-              : t.skipped
-                ? t.evalDetail
-                : t.evalDetail,
-          })),
-          resultEvent: result.finalEvent.body,
-          matchedRule: matchedRuleTrace
-            ? {
-                branchIndex: `Line ${matchedRuleTrace.sourceLine}`,
-                sourceLine: matchedRuleTrace.sourceLine,
-              }
-            : null,
+          evaluationTrace: [
+            {
+              matched: true,
+              branchIndex: "Native Vector",
+              reason: "Successfully evaluated via Vector Rust WASM",
+            },
+          ],
+          resultEvent: outBody,
+          matchedRule: null,
         });
       } catch (e: any) {
-        if (e instanceof VrlParseError) {
-          return NextResponse.json(
-            {
-              error: "VrlParseError",
-              message: e.message,
-              line: e.line,
-              column: e.column,
-            },
-            { status: 400 },
-          );
-        } else {
-          throw e;
-        }
+        return NextResponse.json(
+          {
+            error: "WasmExecutionError",
+            message: e.message || String(e),
+          },
+          { status: 500 },
+        );
       }
     } else {
       // Default: logstash

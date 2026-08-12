@@ -5,7 +5,8 @@ import MonacoEditor from "../../components/editor/MonacoEditor";
 import MultiResultPanel from "../../components/simulator/MultiResultPanel";
 import type { StageTraceEntry } from "../../lib/evaluator/filter-engine";
 import type { LogEvent } from "../../lib/evaluator/helpers";
-import { Play, ArrowLeft, Settings } from "lucide-react";
+import { Play, ArrowLeft, Settings, Wand2 } from "lucide-react";
+import { formatCode } from "../../lib/utils/formatter";
 
 const DEFAULT_LOG = JSON.stringify(
   {
@@ -65,7 +66,7 @@ export default function FilterSimulator() {
 
       if (!res.ok) {
         let errMsg = data.error || "Simulation failed";
-        if (data.message) errMsg += ": " + data.message;
+        if (data.message) errMsg += ":\n" + data.message;
         throw new Error(errMsg);
       }
 
@@ -109,7 +110,13 @@ export default function FilterSimulator() {
       <div className="flex flex-1 overflow-hidden">
         <div className="w-1/3 flex flex-col border-r border-gray-800">
           <div className="p-3 bg-gray-950 border-b border-gray-800 text-sm font-semibold flex justify-between items-center text-gray-400">
-            Raw Payload (Pre-filter API Event)
+            <span>Raw Payload (Pre-filter API Event)</span>
+            <button
+              onClick={() => setRawlog(formatCode(rawlog, "json"))}
+              className="text-xs px-2 py-1 bg-gray-800 hover:bg-gray-700 rounded text-gray-300 flex items-center"
+            >
+              <Wand2 className="h-3 w-3 mr-1" /> Format
+            </button>
           </div>
           <div className="flex-1 overflow-hidden p-2">
             <MonacoEditor
@@ -122,7 +129,13 @@ export default function FilterSimulator() {
 
         <div className="w-1/3 flex flex-col border-r border-gray-800">
           <div className="p-3 bg-gray-950 border-b border-gray-800 text-sm font-semibold flex justify-between items-center text-gray-400">
-            50_filter.conf
+            <span>50_filter.conf</span>
+            <button
+              onClick={() => setConfig(formatCode(config, "logstash"))}
+              className="text-xs px-2 py-1 bg-gray-800 hover:bg-gray-700 rounded text-gray-300 flex items-center"
+            >
+              <Wand2 className="h-3 w-3 mr-1" /> Format
+            </button>
           </div>
           <div className="flex-1 overflow-hidden p-2">
             <MonacoEditor

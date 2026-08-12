@@ -3,8 +3,9 @@ import React, { useState } from "react";
 import MonacoEditor from "../components/editor/MonacoEditor";
 import ResultPanel from "../components/simulator/ResultPanel";
 import type { SimulationResult } from "../lib/evaluator/engine";
-import { Bot, Play } from "lucide-react";
+import { Bot, Play, Wand2 } from "lucide-react";
 import Link from "next/link";
+import { formatCode } from "../lib/utils/formatter";
 
 const DEFAULT_LOG = JSON.stringify(
   {
@@ -107,7 +108,7 @@ export default function Home() {
 
       if (!res.ok) {
         let errMsg = data.error || "Simulation failed";
-        if (data.message) errMsg += ": " + data.message;
+        if (data.message) errMsg += ":\n" + data.message;
         throw new Error(errMsg);
       }
 
@@ -167,7 +168,13 @@ export default function Home() {
       <div className="flex flex-1 overflow-hidden">
         <div className="w-1/3 flex flex-col border-r border-gray-800">
           <div className="p-3 bg-gray-950 border-b border-gray-800 text-sm font-semibold flex justify-between items-center text-gray-400">
-            Raw Log (JSON)
+            <span>Raw Log (JSON)</span>
+            <button
+              onClick={() => setActiveRawLog(formatCode(activeRawLog, "json"))}
+              className="text-xs px-2 py-1 bg-gray-800 hover:bg-gray-700 rounded text-gray-300 flex items-center"
+            >
+              <Wand2 className="h-3 w-3 mr-1" /> Format
+            </button>
           </div>
           <div className="flex-1 overflow-hidden p-2">
             <MonacoEditor
@@ -180,7 +187,13 @@ export default function Home() {
 
         <div className="w-1/3 flex flex-col border-r border-gray-800">
           <div className="p-3 bg-gray-950 border-b border-gray-800 text-sm font-semibold flex justify-between items-center text-gray-400">
-            Pipeline Config ({engine === "logstash" ? "Logstash" : "VRL"})
+            <span>Pipeline Config ({engine === "logstash" ? "Logstash" : "VRL"})</span>
+            <button
+              onClick={() => setActiveConfig(formatCode(activeConfig, engine))}
+              className="text-xs px-2 py-1 bg-gray-800 hover:bg-gray-700 rounded text-gray-300 flex items-center"
+            >
+              <Wand2 className="h-3 w-3 mr-1" /> Format
+            </button>
           </div>
           <div className="flex-1 overflow-hidden p-2">
             <MonacoEditor

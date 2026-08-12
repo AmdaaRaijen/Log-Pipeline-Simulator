@@ -1,16 +1,40 @@
 import { ParsedPipeline, Condition as LSCondition } from "../parser/types";
 import { ParsedVrlPipeline, Condition as VRLCondition, Expr as VRLExpr } from "../vrl/types";
 
-export function flattenForPrompt(obj: unknown, prefix: string[] = []): string[] {
+export function flattenForPrompt(
+  obj: unknown,
+  engine: "logstash" | "vector",
+  prefix: string[] = [],
+): string[] {
   const lines: string[] = [];
   if (Array.isArray(obj)) {
-    obj.forEach((item, i) => lines.push(...flattenForPrompt(item, [...prefix, String(i)])));
+    obj.forEach((item, i) =>
+      lines.push(
+        ...flattenForPrompt(item, engine, [
+          ...prefix,
+          engine === "vector" ? `[${i}]` : String(i),
+        ]),
+      ),
+    );
   } else if (obj !== null && typeof obj === "object") {
     for (const [key, value] of Object.entries(obj)) {
-      lines.push(...flattenForPrompt(value, [...prefix, key]));
+      lines.push(...flattenForPrompt(value, engine, [...prefix, key]));
     }
   } else {
-    lines.push(`${prefix.join(".")} = ${JSON.stringify(obj)}`);
+    let pathStr = "";
+    if (engine === "logstash") {
+      pathStr = `[${prefix.join("][")}]`; // e.g., [process_chain][1][command]
+    } else {
+      // Vector
+      pathStr =
+        "." +
+        prefix.reduce((acc, part, i) => {
+          if (part.startsWith("[")) return acc + part; // [1]
+          if (i === 0) return part;
+          return acc + "." + part;
+        }, "");
+    }
+    lines.push(`${pathStr} = ${JSON.stringify(obj)}`);
   }
   return lines;
 }

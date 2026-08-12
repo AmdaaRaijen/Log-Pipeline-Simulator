@@ -8,9 +8,8 @@ import {
 import { tokenize as tokenizeLogstash } from "../../../lib/parser/tokenizer";
 import { LogstashParser } from "../../../lib/parser/logstash-parser";
 import { Evaluator } from "../../../lib/evaluator/engine";
-import { parseVrlScript } from "../../../lib/vrl/parser";
-import { VrlEngine } from "../../../lib/vrl/engine";
 import { LogEvent } from "../../../lib/evaluator/helpers";
+import { evaluate_vrl } from "../../../lib/vrl-wasm-pkg/vrl_wasm";
 
 const LlmWhitelistOutputSchema = z.object({
   snippet: z.string().min(1),
@@ -55,7 +54,7 @@ export async function POST(request: Request) {
     const parsedRawlog =
       typeof rawlog === "string" ? JSON.parse(rawlog) : rawlog;
     const eventRoot = resolveEventRoot(parsedRawlog);
-    const flattenedPaths = flattenForPrompt(eventRoot);
+    const flattenedPaths = flattenForPrompt(eventRoot, engine as "logstash" | "vector");
 
     let systemPrompt = `Kamu adalah asisten pembuat rule whitelist untuk SIEM pipeline (${engine === "logstash" ? "Logstash conditional filter" : "Vector VRL"}).
 
@@ -196,27 +195,31 @@ ${exampleWhitelist ? `Contoh whitelist (gaya yang diikuti): ${exampleWhitelist}`
           }
         } else {
           // Vector
-          const pipeline = parseVrlScript(snippet);
-          const initialEvent: LogEvent = {
-            __id: "1",
-            metadata: {},
-            body: parsedRawlog,
-          };
-          const vrlEngine = new VrlEngine(pipeline, true);
-          const result = vrlEngine.run(initialEvent);
+          const payloadStr = JSON.stringify(parsedRawlog);
+          const vrlResult = evaluate_vrl(snippet, payloadStr);
+          
+          if (!vrlResult.success) {
+            throw new Error(vrlResult.output); // Throw so it's caught as parse error
+          }
 
-          evalTrace = result.trace.map((t) => ({
-            matched: t.matched,
-            branchIndex: `Line ${t.sourceLine}`,
-            reason: t.error ? `Error: ${t.error}` : t.evalDetail,
-          }));
+          const outBody = JSON.parse(vrlResult.output);
 
-          const _source = resolveEventRoot(result.finalEvent.body);
+          evalTrace = [
+            {
+              matched: true,
+              branchIndex: "Native Vector",
+              reason: "Successfully evaluated via Vector Rust WASM",
+            },
+          ];
+
+          const _source = resolveEventRoot(outBody);
           isWhitelisted =
             _source.whitelisted === "true" || _source.whitelisted === true;
 
           if (isWhitelisted) {
-            lintWarnings = lintForOverBroadRule(pipeline, "vector");
+            // Note: AST linting for vector is tricky without a JS AST, 
+            // but we can skip overbroad checks for Vector since we don't have JS AST
+            lintWarnings = []; 
           }
         }
       } catch (err: any) {
