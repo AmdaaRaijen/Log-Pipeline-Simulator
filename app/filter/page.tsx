@@ -123,6 +123,7 @@ export default function FilterSimulator() {
               value={rawlog}
               onChange={(v) => setRawlog(v || "")}
               language="json"
+              path="filter_rawlog.json"
             />
           </div>
         </div>
@@ -142,6 +143,7 @@ export default function FilterSimulator() {
               value={config}
               onChange={(v) => setConfig(v || "")}
               language="ruby"
+              path="filter_config.txt"
             />
           </div>
         </div>

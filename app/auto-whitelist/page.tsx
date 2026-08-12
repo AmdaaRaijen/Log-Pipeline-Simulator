@@ -60,11 +60,11 @@ export default function AutoWhitelist() {
       if (parsed && typeof parsed === "object" && parsed._source) {
         root = parsed._source;
       }
-      return flattenForPrompt(root);
+      return flattenForPrompt(root, engine);
     } catch {
       return ["(Invalid JSON)"];
     }
-  }, [rawlog]);
+  }, [rawlog, engine]);
 
   const runGeneration = async () => {
     if (!description.trim()) {
@@ -167,6 +167,7 @@ export default function AutoWhitelist() {
               value={rawlog}
               onChange={(v: string | undefined) => setRawlog(v || "")}
               language="json"
+              path="auto_whitelist_rawlog.json"
             />
           </div>
         </div>

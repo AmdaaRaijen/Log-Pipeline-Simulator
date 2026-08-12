@@ -181,6 +181,7 @@ export default function Home() {
               value={activeRawLog}
               onChange={(v) => setActiveRawLog(v || "")}
               language="json"
+              path="page_rawlog.json"
             />
           </div>
         </div>
@@ -200,6 +201,7 @@ export default function Home() {
               value={activeConfig}
               onChange={(v) => setActiveConfig(v || "")}
               language={engine === "logstash" ? "ruby" : "rust"}
+              path="page_config.txt"
             />
           </div>
         </div>
