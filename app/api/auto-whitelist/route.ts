@@ -9,7 +9,6 @@ import {
 import { tokenize as tokenizeLogstash } from "../../../lib/parser/tokenizer";
 import { LogstashParser } from "../../../lib/parser/logstash-parser";
 import { Evaluator } from "../../../lib/evaluator/engine";
-import { LogEvent } from "../../../lib/evaluator/helpers";
 import { evaluate_vrl } from "../../../lib/vrl-wasm-pkg/vrl_wasm";
 
 const LlmWhitelistOutputSchema = z.object({
@@ -68,7 +67,7 @@ ATURAN OUTPUT:
   ${
     engine === "logstash"
       ? "[Logstash]: kondisi memakai =~, !~, ==, !=, in [...], and, or, !; hanya action mutate.add_field yang didukung. Untuk assignment ID, gunakan '{id}'"
-      : "[Vector]: kondisi memakai exists(), contains(), match() dengan regex r'...', to_string!(), ==, &&, ||, !; assignment .field = \"value\". Untuk assignment ID, gunakan '{id}'"
+      : '[Vector]: Gunakan syntax Vector Remap Language (VRL) standar. Untuk assignment ID, gunakan \'{id}\' (misal: .whitelist = "true"; .whitelistID = "{id}")'
   }
 - Field path HARUS diambil dari daftar "Available field paths" yang diberikan — JANGAN mengarang path yang tidak ada di sana.
 - Response harus berformat JSON valid mengikuti schema: { "snippet": "string", "explanation": "string", "suggestedWhitelistId": "string" }
@@ -217,6 +216,7 @@ ${exampleWhitelist ? `Contoh whitelist (gaya yang diikuti): ${exampleWhitelist}`
           ];
 
           const _source = resolveEventRoot(outBody);
+
           isWhitelisted =
             _source.whitelisted === "true" || _source.whitelisted === true;
 

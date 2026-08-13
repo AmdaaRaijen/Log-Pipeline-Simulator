@@ -31,7 +31,11 @@ export async function POST(request: Request) {
 
     if (engine === "vector") {
       try {
-        const payloadStr = JSON.stringify(parsedRawlog);
+        const eventToEvaluate = parsedRawlog._source
+          ? parsedRawlog._source
+          : parsedRawlog;
+        const payloadStr = JSON.stringify(eventToEvaluate);
+
         // evaluate_vrl is synchronous and returns VrlResult
         const vrlResult = evaluate_vrl(pipelineConfig, payloadStr);
 
@@ -47,7 +51,8 @@ export async function POST(request: Request) {
 
         const outBody = JSON.parse(vrlResult.output);
 
-        const rawWhitelisted = outBody?.whitelisted ?? outBody?._source?.whitelisted;
+        const rawWhitelisted =
+          outBody?.whitelisted ?? outBody?._source?.whitelisted;
 
         const isWhitelisted =
           rawWhitelisted === true ||
