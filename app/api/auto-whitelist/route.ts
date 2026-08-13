@@ -63,7 +63,7 @@ ATURAN OUTPUT:
 - Gunakan HANYA syntax berikut (di luar ini akan gagal divalidasi):
   ${
     engine === "logstash"
-      ? "[Logstash]: kondisi memakai =~, !~, ==, !=, in [...], and, or, !; hanya action mutate.add_field yang didukung. Untuk assignment ID, gunakan '{id}'"
+      ? "[Logstash]: kondisi memakai =~, !~, ==, !=, in [...], and, or, !; gunakan blok mutate { add_field => { ... } }. Contoh: if [field] == \"val\" { mutate { add_field => { \"whitelisted\" => \"true\", \"whitelistID\" => \"{id}\" } } }"
       : '[Vector]: Gunakan syntax Vector Remap Language (VRL) standar. Untuk assignment ID, gunakan \'{id}\' (misal: .whitelist = "true"; .whitelistID = "{id}")'
   }
 - Field path HARUS diambil dari daftar "Available field paths" yang diberikan — JANGAN mengarang path yang tidak ada di sana.
