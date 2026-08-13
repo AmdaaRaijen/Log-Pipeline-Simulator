@@ -47,11 +47,17 @@ export function runSimulation(
       const outBody = JSON.parse(vrlResult.output);
       const rawWhitelisted =
         outBody?.whitelisted ?? outBody?._source?.whitelisted;
+      const rawWhitelistID =
+        outBody?.whitelistID ?? outBody?._source?.whitelistID ?? outBody?.whitelistId ?? outBody?._source?.whitelistId;
+      const logCategory = 
+        outBody?.field?.log_category ?? outBody?._source?.field?.log_category ?? outBody?.["@metadata"]?.log_category ?? outBody?._source?.["@metadata"]?.log_category;
 
       const isWhitelisted =
         rawWhitelisted === true ||
         rawWhitelisted === "true" ||
-        String(rawWhitelisted).toLowerCase() === "true";
+        String(rawWhitelisted).toLowerCase() === "true" ||
+        (rawWhitelistID !== undefined && rawWhitelistID !== null) ||
+        logCategory === "activity";
 
       return {
         success: true,
@@ -87,8 +93,10 @@ export function runSimulation(
       let finalWhitelisted = false;
       const _source = result.resultEvent?._source;
       const val = result.resultEvent?.whitelisted ?? _source?.whitelisted;
+      const wId = result.resultEvent?.whitelistID ?? _source?.whitelistID ?? result.resultEvent?.whitelistId ?? _source?.whitelistId;
+      const logCategory = result.resultEvent?.field?.log_category ?? _source?.field?.log_category ?? result.resultEvent?.["@metadata"]?.log_category ?? _source?.["@metadata"]?.log_category;
       
-      finalWhitelisted = val === true || val === "true" || String(val).toLowerCase() === "true";
+      finalWhitelisted = val === true || val === "true" || String(val).toLowerCase() === "true" || (wId !== undefined && wId !== null) || logCategory === "activity";
       // We will override result.matched if necessary, but Logstash sets it via `add_field` logic.
       // Usually `simulate` sets `matched` to true if any branch matches. 
       // We will rely on `result.matched` from the simulator engine for consistency, but ensure it aligns with `whitelisted`.

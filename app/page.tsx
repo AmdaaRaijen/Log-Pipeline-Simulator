@@ -123,10 +123,10 @@ export default function Home() {
   return (
     <div className="flex flex-col h-screen bg-black text-gray-200 font-sans">
       {/* Top Navbar */}
-      <div className="h-12 bg-gray-900 border-b border-gray-800 flex items-center justify-between px-4">
+      <div className="h-12 bg-gray-900 border-b border-gray-800 flex items-center justify-start px-4 gap-4">
         <div className="flex items-center space-x-4">
           <h1 className="font-bold text-white tracking-wide">
-            Exclude Simulator
+            Whitelist Simulator
           </h1>
           <div className="flex space-x-1 bg-gray-800 p-1 rounded-md">
             <button
@@ -188,7 +188,9 @@ export default function Home() {
 
         <div className="w-1/3 flex flex-col border-r border-gray-800">
           <div className="p-3 bg-gray-950 border-b border-gray-800 text-sm font-semibold flex justify-between items-center text-gray-400">
-            <span>Pipeline Config ({engine === "logstash" ? "Logstash" : "VRL"})</span>
+            <span>
+              Pipeline Config ({engine === "logstash" ? "Logstash" : "VRL"})
+            </span>
             <button
               onClick={() => setActiveConfig(formatCode(activeConfig, engine))}
               className="text-xs px-2 py-1 bg-gray-800 hover:bg-gray-700 rounded text-gray-300 flex items-center"

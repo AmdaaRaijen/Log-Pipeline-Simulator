@@ -116,12 +116,12 @@ export function tokenize(input: string): Token[] {
     }
 
     // Identifiers and Keywords
-    if (/[a-zA-Z0-9_\-\.\?\:]/.test(char)) {
+    if (/[a-zA-Z0-9_\-\.\?\:@]/.test(char)) {
       const startCol = column;
       const startLine = line;
       let value = "";
       
-      while (current < input.length && /[a-zA-Z0-9_\-\.\?\:]/.test(input[current])) {
+      while (current < input.length && /[a-zA-Z0-9_\-\.\?\:@]/.test(input[current])) {
         value += input[current];
         advance();
       }
