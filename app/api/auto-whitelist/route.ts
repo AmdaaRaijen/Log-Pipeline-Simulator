@@ -6,10 +6,7 @@ import {
   lintForOverBroadRule,
   normalizeSnippetForValidation,
 } from "../../../lib/evaluator/auto-whitelist-utils";
-import { tokenize as tokenizeLogstash } from "../../../lib/parser/tokenizer";
-import { LogstashParser } from "../../../lib/parser/logstash-parser";
-import { Evaluator } from "../../../lib/evaluator/engine";
-import { evaluate_vrl } from "../../../lib/vrl-wasm-pkg/vrl_wasm";
+import { runSimulation } from "../../../lib/evaluator/simulator";
 
 const LlmWhitelistOutputSchema = z.object({
   snippet: z.string().min(1),
@@ -175,56 +172,24 @@ ${exampleWhitelist ? `Contoh whitelist (gaya yang diikuti): ${exampleWhitelist}`
       let lintWarnings: string[] = [];
 
       try {
-        if (engine === "logstash") {
-          const tokens = tokenizeLogstash(snippet);
-          const parser = new LogstashParser(tokens);
-          const pipeline = parser.parse();
+        const result = runSimulation(engine as "logstash" | "vector", snippet, parsedRawlog);
 
-          const evaluator = new Evaluator(parsedRawlog);
-          const result = evaluator.simulate(pipeline);
+        if (!result.success) {
+          throw new Error(result.message || result.error);
+        }
 
-          evalTrace = result.evaluationTrace.map((t: any) => ({
-            matched: t.matched,
-            branchIndex: `Branch ${t.branchIndex}`,
-            reason: t.reason,
-          }));
+        isWhitelisted = result.matched;
+        
+        evalTrace = result.evaluationTrace.map((t: any) => ({
+          matched: t.matched,
+          branchIndex: String(t.branchIndex).includes("Branch") ? t.branchIndex : `Branch ${t.branchIndex}`,
+          reason: t.reason,
+        }));
 
-          const _source = resolveEventRoot(result.resultEvent);
-          isWhitelisted =
-            _source.whitelisted === "true" || _source.whitelisted === true;
-
-          if (isWhitelisted) {
-            lintWarnings = lintForOverBroadRule(pipeline, "logstash");
-          }
-        } else {
-          // Vector
-          const payloadStr = JSON.stringify(parsedRawlog);
-          const vrlResult = evaluate_vrl(snippet, payloadStr);
-
-          if (!vrlResult.success) {
-            throw new Error(vrlResult.output); // Throw so it's caught as parse error
-          }
-
-          const outBody = JSON.parse(vrlResult.output);
-
-          evalTrace = [
-            {
-              matched: true,
-              branchIndex: "Native Vector",
-              reason: "Successfully evaluated via Vector Rust WASM",
-            },
-          ];
-
-          const _source = resolveEventRoot(outBody);
-
-          isWhitelisted =
-            _source.whitelisted === "true" || _source.whitelisted === true;
-
-          if (isWhitelisted) {
-            // Note: AST linting for vector is tricky without a JS AST,
-            // but we can skip overbroad checks for Vector since we don't have JS AST
-            lintWarnings = [];
-          }
+        if (isWhitelisted && engine === "logstash" && result.pipelineAST) {
+          lintWarnings = lintForOverBroadRule(result.pipelineAST, "logstash");
+        } else if (isWhitelisted && engine === "vector") {
+          lintWarnings = [];
         }
       } catch (err: any) {
         attempts.push({
