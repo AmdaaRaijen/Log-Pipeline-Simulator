@@ -1,0 +1,11 @@
+{
+  "name": "vrl-wasm",
+  "version": "0.1.0",
+  "files": [
+    "vrl_wasm_bg.wasm",
+    "vrl_wasm.js",
+    "vrl_wasm.d.ts"
+  ],
+  "main": "vrl_wasm.js",
+  "types": "vrl_wasm.d.ts"
+}
