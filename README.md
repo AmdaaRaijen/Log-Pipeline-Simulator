@@ -4,22 +4,27 @@ A web-based tool to simulate, test, and generate SIEM pipeline configurations (L
 
 ## Key Features
 
-1. **Whitelist / Exclude Simulator**
-   - Test your Logstash (`.conf`) and Vector (`.toml`/VRL) conditional rules against raw JSON logs.
+1. **Whitelist Simulator**
+   - Test your Logstash (`.conf`) and Vector VRL conditional rules against raw JSON logs.
    - See detailed evaluation traces explaining exactly *why* a rule matched or failed.
-   - Supports complex conditions, nested fields, regex matching, and field mutations.
+   - Supports multiple rules triggering simultaneously and array-forming for `whitelist` fields.
+   - Now powered by **Native VRL WASM (WebAssembly)** for exact parity with Vector engines.
 
 2. **Parser Simulator**
-   - Simulate and debug data parsing and transformation rules.
+   - Simulate and debug data parsing and transformation rules (WIP).
 
 3. **Auto Whitelist Creator**
-   - Use AI-assisted tools to automatically generate whitelist rules based on your log samples.
+   - Use AI-assisted tools (OpenAI GPT-4o) to automatically generate whitelist rules based on your log samples.
+   - Features built-in AST code linting and real-time validation to ensure the generated rule is syntactically sound before displaying it.
 
 ## Tech Stack
 
-- **Frontend**: Next.js 15 (App Router), React, TailwindCSS
+- **Frontend**: Next.js 15 (App Router), React 19, TailwindCSS 4
 - **Editor**: Monaco Editor (`@monaco-editor/react`) for JSON and configuration syntax highlighting
-- **Parsing Engine**: Custom AST parser and condition evaluator for Logstash and Vector VRL
+- **Parsing Engine**: 
+  - *Logstash*: Custom Javascript AST parser & engine evaluator
+  - *Vector*: Rust WebAssembly (WASM) native binding via `vrl-wasm`
+- **Docker**: Ready to deploy with full containerization support
 
 ## Getting Started
 
