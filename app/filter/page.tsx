@@ -87,7 +87,7 @@ export default function FilterSimulator() {
             href="/"
             className="flex items-center text-gray-400 hover:text-white transition-colors text-sm"
           >
-            <ArrowLeft className="h-4 w-4 mr-1" /> Exclude Simulator
+            <ArrowLeft className="h-4 w-4 mr-1" /> Whitelist Simulator
           </Link>
           <div className="h-4 w-px bg-gray-700"></div>
           <h1 className="font-bold text-white tracking-wide">

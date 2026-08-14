@@ -24,9 +24,9 @@ const DEFAULT_CONFIG = `filter {
   if [indicators][value] =~ /\\/opt\\/metasploit-framework\\/data\\// {
     mutate { add_field => { "whitelisted" => "true", "whitelistId" => "1" } }
   } else if [model] == "Network Sniffing" {
+    mutate { add_field => { "whitelisted" => "true", "whitelistId" => "2" } }
+  } else if [model] == "Scanned Malware Detection" and [indicators][value] == "PAK_Generic.001" {
     mutate { add_field => { "whitelisted" => "true", "whitelistId" => "3" } }
-  } else if [model] == "Scanned Malware Detection" and [indicators][value] =~ /(?i)^C:\\\\Program Files \\(x86\\)\\\\nxlog\\\\/ {
-    mutate { add_field => { "whitelisted" => "true", "whitelistId" => "6" } }
   }
 }`;
 
@@ -149,20 +149,22 @@ export default function Home() {
             </button>
           </div>
           <div className="h-4 w-px bg-gray-700"></div>
-          <a
-            href="/filter"
-            className="flex items-center text-blue-400 hover:text-white transition-colors text-sm"
-          >
-            Parser Simulator &rarr;
-          </a>
+          <nav className="flex items-center space-x-2">
+            <Link
+              href="/filter"
+              className="flex items-center text-gray-400 hover:text-white hover:bg-gray-800 px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
+            >
+              Parser Simulator
+            </Link>
+            <Link
+              href="/auto-whitelist"
+              className="flex items-center space-x-2 text-gray-400 hover:text-white hover:bg-gray-800 px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
+            >
+              <Bot className="h-4 w-4" />
+              <span>Auto Whitelist Creator</span>
+            </Link>
+          </nav>
         </div>
-        <Link
-          href="/auto-whitelist"
-          className="flex items-center space-x-2 bg-green-600 hover:bg-green-500 text-white px-3 py-1.5 rounded-md text-sm font-medium transition-colors disabled:opacity-50 cursor-pointer"
-        >
-          <Bot className="h-4 w-4" />
-          <span>Auto Whitelist Creator</span>
-        </Link>
       </div>
 
       <div className="flex flex-1 overflow-hidden">
