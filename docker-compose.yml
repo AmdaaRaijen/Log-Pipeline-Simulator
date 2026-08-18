@@ -6,7 +6,8 @@ services:
     container_name: pipeline-simulator
     ports:
       - "3000:3000"
+    env_file:
+      - .env
     environment:
       - NODE_ENV=production
-      # - OPENAI_API_KEY=your-api-key-here
     restart: unless-stopped
