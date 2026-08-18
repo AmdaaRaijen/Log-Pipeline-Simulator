@@ -13,7 +13,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SIEM Pipeline Simulator",
+  title: {
+    template: "%s | SIEM Pipeline Simulator",
+    default: "SIEM Pipeline Simulator",
+  },
   description: "Test, simulate, and generate SIEM pipeline configs (Logstash & Vector VRL)",
 };
 
