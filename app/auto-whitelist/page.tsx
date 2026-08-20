@@ -37,6 +37,7 @@ const DEFAULT_LOG = JSON.stringify(
 
 export default function AutoWhitelist() {
   const [engine, setEngine] = useState<"logstash" | "vector">("logstash");
+  const [whitelistMode, setWhitelistMode] = useState<"default" | "activity">("default");
   const [rawlog, setRawlog] = useState<string>(DEFAULT_LOG);
   const [exampleWhitelist, setExampleWhitelist] = useState<string>("");
   const [description, setDescription] = useState<string>(
@@ -87,6 +88,7 @@ export default function AutoWhitelist() {
           exampleWhitelist,
           description,
           maxRetries,
+          whitelistMode,
         }),
       });
 
@@ -231,6 +233,31 @@ export default function AutoWhitelist() {
                 Untuk menentukan output sebagai logstash atau vector.
               </p>
             </div>
+
+            {engine === "logstash" && (
+              <div>
+                <label className="text-xs font-semibold text-gray-400">
+                  Whitelist Mode (Logstash)
+                </label>
+                <div className="flex space-x-1 bg-gray-800 p-1 rounded-md w-fit">
+                  <button
+                    onClick={() => setWhitelistMode("default")}
+                    className={`px-3 py-1 text-xs font-semibold rounded ${whitelistMode === "default" ? "bg-blue-600 text-white" : "text-gray-400 hover:text-white"}`}
+                  >
+                    Default
+                  </button>
+                  <button
+                    onClick={() => setWhitelistMode("activity")}
+                    className={`px-3 py-1 text-xs font-semibold rounded ${whitelistMode === "activity" ? "bg-blue-600 text-white" : "text-gray-400 hover:text-white"}`}
+                  >
+                    Category: Activity
+                  </button>
+                </div>
+                <p className="text-[10px] text-gray-500">
+                  Pilih gaya output Logstash yang dihasilkan oleh LLM.
+                </p>
+              </div>
+            )}
 
             <div className="flex flex-col space-y-1 mt-auto pt-4 border-t border-gray-800">
               <div className="flex justify-between items-center mb-2">

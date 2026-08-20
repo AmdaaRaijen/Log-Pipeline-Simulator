@@ -83,7 +83,19 @@ if !exists(.whitelisted) && match(to_string(.process_chain[1].command) ?? "", r'
 
 export type Engine = "logstash" | "vector";
 
-export function getEngineGuide(engine: Engine): string {
+export function getEngineGuide(engine: Engine, whitelistMode: "default" | "activity" = "default"): string {
+  if (engine === "logstash" && whitelistMode === "activity") {
+    return LOGSTASH_GUIDE.replace(
+      /mutate \{[\s\S]*?\}/,
+      'mutate {\n    add_field => { "[field][log_category]" => "activity" }\n  }'
+    ).replace(
+      /ACTION: HANYA mutate \{ add_field => \{ "key" => "value" \} \}\./,
+      'ACTION: HANYA mutate { add_field => { "[field][log_category]" => "activity" } }.'
+    ).replace(
+      /WHITELIST ID: gunakan placeholder string "__WHITELIST_ID__" untuk value "whitelistId", JANGAN angka literal\./,
+      'WHITELIST ID: tidak diperlukan untuk mode log_category activity.'
+    );
+  }
   return engine === "logstash" ? LOGSTASH_GUIDE : VRL_GUIDE;
 }
 
@@ -95,18 +107,19 @@ export function buildSystemPrompt(params: {
   flattenedPaths: string[];
   description: string;
   exampleWhitelist?: string;
+  whitelistMode?: "default" | "activity";
 }): string {
-  const { engine, flattenedPaths, description, exampleWhitelist } = params;
+  const { engine, flattenedPaths, description, exampleWhitelist, whitelistMode = "default" } = params;
   return `Kamu adalah asisten pembuat rule whitelist untuk SIEM pipeline (${
     engine === "logstash" ? "Logstash conditional filter" : "Vector VRL"
   }).
 
-${getEngineGuide(engine)}
+${getEngineGuide(engine, whitelistMode)}
 
 ATURAN OUTPUT UMUM:
 - Output HANYA satu blok rule (if-block), bukan seluruh file config.
 - Field path HARUS diambil dari daftar "Available field paths" di bawah — JANGAN mengarang path yang tidak ada di sana.
-- Response harus JSON valid mengikuti schema: { "snippet": "string", "explanation": "string", "suggestedWhitelistId": "string" }
+- Response harus JSON valid mengikuti schema: { "snippet": "string", "explanation": "string"${whitelistMode === "default" ? ', "suggestedWhitelistId": "string"' : ""} }
 
 KONTEKS:
 Available field paths:

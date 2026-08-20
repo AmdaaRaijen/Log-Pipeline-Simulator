@@ -104,12 +104,14 @@ export async function POST(request: Request) {
       exampleWhitelist,
       description,
       maxRetries = 3,
+      whitelistMode = "default",
     }: {
       engine: Engine;
       rawlog: any;
       exampleWhitelist?: string;
       description: string;
       maxRetries?: number;
+      whitelistMode?: "default" | "activity";
     } = body;
 
     if (!rawlog || !description) {
@@ -129,6 +131,7 @@ export async function POST(request: Request) {
       flattenedPaths,
       description,
       exampleWhitelist,
+      whitelistMode,
     });
 
     const attempts: Attempt[] = [];
