@@ -329,9 +329,15 @@ export class LogstashParser {
       return { type: "equals", field, value: val, negate: op === "!=" };
     } else if (op === "=~" || op === "!~") {
       const valueToken = this.advance();
-      if (valueToken.type !== "Regex") throw new ParseError("Expected regex after =~ or !~", valueToken.line, valueToken.column);
+      if (valueToken.type !== "Regex" && valueToken.type !== "String") {
+        throw new ParseError("Expected regex or string after =~ or !~", valueToken.line, valueToken.column);
+      }
       
       let pattern = valueToken.value;
+      if (valueToken.type === "String") {
+        pattern = pattern.replace(/^"|'$/, "");
+      }
+      
       let flags = "";
       if (pattern.startsWith("(?i)")) {
         flags = "i";
