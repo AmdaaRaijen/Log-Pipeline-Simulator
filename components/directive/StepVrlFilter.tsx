@@ -130,9 +130,16 @@ export function StepVrlFilter({
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
               <div className="bg-gray-900 border border-gray-700 rounded-lg shadow-xl w-full max-w-4xl flex flex-col h-[80vh]">
                 <div className="flex items-center justify-between p-4 border-b border-gray-800 shrink-0">
-                  <h3 className="text-lg font-bold text-white">
-                    VRL Test Results
-                  </h3>
+                  <div className="flex items-center gap-4">
+                    <h3 className="text-lg font-bold text-white">
+                      VRL Test Results
+                    </h3>
+                    {!vrlTestResult.error && (
+                      <div className={`px-2 py-1 rounded text-xs font-semibold ${JSON.stringify(vrlTestResult).includes('"usecase"') ? "bg-green-900 text-green-300 border border-green-700" : "bg-yellow-900 text-yellow-300 border border-yellow-700"}`}>
+                        {JSON.stringify(vrlTestResult).includes('"usecase"') ? "✓ Rule Match" : "⚠ No Rule Match"}
+                      </div>
+                    )}
+                  </div>
                   <button
                     onClick={() => setShowTestModal(false)}
                     className="text-gray-400 hover:text-white p-1 rounded hover:bg-gray-800"

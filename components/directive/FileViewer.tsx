@@ -4,14 +4,41 @@ import MonacoEditor from "../editor/MonacoEditor";
 import { CopyButton } from "./CopyButton";
 import { ArrowLeft, Info } from "lucide-react";
 
-export function FileViewer({ name, content, language, onClose }: {
-  name: string; content: string; language: string; onClose: () => void;
+export function FileViewer({
+  name,
+  content,
+  language,
+  onClose,
+}: {
+  name: string;
+  content: string;
+  language: string;
+  onClose: () => void;
 }) {
   const getHelp = () => {
-    if (name.endsWith(".tsv")) return { purpose: "Enrichment table mapping title → plugin_id + plugin_sid", destination: "Vector pod: /etc/dsiem-plugin-tsv/" };
-    if (name.endsWith(".json")) return { purpose: "Directive rules consumed by DSIEM backend", destination: "dsiem-frontend pod: dsiem/configs/" };
-    if (name.endsWith(".yaml")) return { purpose: "Vector transform that normalizes events and looks up plugin_sid", destination: "Vector parser: /root/data/mgmt/kubeappl/vector-parser/configs/{device}/" };
-    if (name.endsWith(".vrl")) return { purpose: "Custom usecase tagging (optional)", destination: "Vector parser: /root/data/mgmt/kubeappl/vector-parser/configs/{device}/" };
+    if (name.endsWith(".tsv"))
+      return {
+        purpose: "Enrichment table mapping title → plugin_id + plugin_sid",
+        destination: "/mnt/NAS/dsiem-plugin-tsv",
+      };
+    if (name.endsWith(".json"))
+      return {
+        purpose: "Directive rules consumed by DSIEM backend",
+        destination: "dsiem-frontend pod: dsiem/configs/",
+      };
+    if (name.endsWith(".yaml"))
+      return {
+        purpose:
+          "Vector transform that normalizes events and looks up plugin_sid",
+        destination:
+          "Vector parser: /root/data/mgmt/kubeappl/vector-parser/configs/{device}/",
+      };
+    if (name.endsWith(".vrl"))
+      return {
+        purpose: "Custom usecase tagging (optional)",
+        destination:
+          "Vector parser: /root/data/mgmt/kubeappl/vector-parser/configs/{device}/",
+      };
     return null;
   };
   const help = getHelp();
@@ -32,13 +59,28 @@ export function FileViewer({ name, content, language, onClose }: {
           <div className="bg-blue-950/30 border border-blue-900 rounded-md p-3 flex gap-3 text-sm text-blue-200 flex-shrink-0">
             <Info className="h-5 w-5 flex-shrink-0 text-blue-400" />
             <div className="flex flex-col gap-1">
-              <div><span className="font-semibold text-blue-300">Purpose:</span> {help.purpose}</div>
-              <div><span className="font-semibold text-blue-300">Destination:</span> <code className="bg-blue-900/50 px-1.5 py-0.5 rounded text-xs font-mono">{help.destination}</code></div>
+              <div>
+                <span className="font-semibold text-blue-300">Purpose:</span>{" "}
+                {help.purpose}
+              </div>
+              <div>
+                <span className="font-semibold text-blue-300">
+                  Destination:
+                </span>{" "}
+                <code className="bg-blue-900/50 px-1.5 py-0.5 rounded text-xs font-mono">
+                  {help.destination}
+                </code>
+              </div>
             </div>
           </div>
         )}
         <div className="flex-1 min-h-0">
-          <MonacoEditor value={content} onChange={() => {}} language={language} path={name} />
+          <MonacoEditor
+            value={content}
+            onChange={() => {}}
+            language={language}
+            path={name}
+          />
         </div>
       </div>
     </div>
