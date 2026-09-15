@@ -1,0 +1,76 @@
+"use client";
+import React from "react";
+import MonacoEditor from "../editor/MonacoEditor";
+import { CopyButton } from "./CopyButton";
+import { Wand2, Play } from "lucide-react";
+
+export function StepVrlFilter({
+  group, vrlContent, setVrlContent, vrlRawlog, setVrlRawlog,
+  vrlDesc, setVrlDesc, vrlLoading, vrlTestResult, vrlGenResult,
+  onTestVrl, onGenerateVrl,
+}: {
+  group: string;
+  vrlContent: string; setVrlContent: (v: string) => void;
+  vrlRawlog: string; setVrlRawlog: (v: string) => void;
+  vrlDesc: string; setVrlDesc: (v: string) => void;
+  vrlLoading: boolean;
+  vrlTestResult: any;
+  vrlGenResult: { attempts: any[]; error?: string } | null;
+  onTestVrl: () => void;
+  onGenerateVrl: () => void;
+}) {
+  const template = `# Template — add your usecase blocks below\n# Pattern:\n# if !exists(.usecase.id) && (<condition>) {\n#   .usecase.author     = "analyst"\n#   .usecase.id         = "1"\n#   .usecase.title_name = "Exact title matching TSV"\n#   .usecase.type       = "Custom"\n#   .usecase.description = "What this detects."\n# }\n`;
+  return (
+    <div className="grid grid-cols-2 gap-4 h-full">
+      <div className="flex flex-col">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm font-semibold text-white">60_custom-filter_{group}.vrl</span>
+          <CopyButton text={vrlContent} />
+        </div>
+        <div className="flex-1 min-h-0">
+          <MonacoEditor value={vrlContent} onChange={(v) => setVrlContent(v || "")} language="plaintext" path="60-filter.vrl" />
+        </div>
+        {!vrlContent && (
+          <button onClick={() => setVrlContent(template)} className="mt-2 text-xs text-blue-400 hover:text-blue-300">
+            → Insert template
+          </button>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <div className="rounded-lg border border-gray-700 p-3 bg-gray-900 flex flex-col gap-3">
+          <span className="text-xs font-semibold text-gray-300">🤖 Auto-Generate Usecase with AI</span>
+          <textarea value={vrlDesc} onChange={(e) => setVrlDesc(e.target.value)} rows={2}
+            placeholder="Describe what this usecase should detect..."
+            className="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1.5 text-xs text-gray-300 focus:border-blue-500 focus:outline-none resize-none" />
+          <button onClick={onGenerateVrl} disabled={vrlLoading || !vrlDesc.trim()}
+            className="flex items-center gap-2 text-xs bg-purple-700 hover:bg-purple-600 disabled:opacity-50 text-white px-3 py-1.5 rounded-md transition-colors self-start">
+            <Wand2 className="h-3 w-3" />
+            {vrlLoading ? "Generating..." : "Generate & Append"}
+          </button>
+          {vrlGenResult && (
+            <div className={`text-xs p-2 rounded ${vrlGenResult.error ? "bg-red-950 text-red-300 border border-red-800" : "bg-green-950 text-green-300 border border-green-800"}`}>
+              {vrlGenResult.error ? `Error: ${vrlGenResult.error}` : `✓ Generated! ${(vrlGenResult as any).explanation || ""}`}
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-lg border border-gray-700 p-3 bg-gray-900 flex flex-col gap-2 flex-1">
+          <span className="text-xs font-semibold text-gray-300">🧪 Test VRL Against Raw Log</span>
+          <div className="flex-1 min-h-0 h-40">
+            <MonacoEditor value={vrlRawlog} onChange={(v) => setVrlRawlog(v || "")} language="json" path="vrl-test-rawlog.json" />
+          </div>
+          <button onClick={onTestVrl}
+            className="flex items-center gap-2 text-xs bg-blue-700 hover:bg-blue-600 text-white px-3 py-1.5 rounded-md transition-colors self-start">
+            <Play className="h-3 w-3" /> Test VRL
+          </button>
+          {vrlTestResult && (
+            <div className={`text-xs p-2 rounded font-mono overflow-auto max-h-32 ${vrlTestResult.error ? "bg-red-950 text-red-300 border border-red-800" : "bg-gray-800 text-gray-300"}`}>
+              {JSON.stringify(vrlTestResult, null, 2)}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,96 @@
+"use client";
+import React from "react";
+import { AlertTriangle } from "lucide-react";
+
+export function StepSetup({
+  group, setGroup, indexName, setIndexName, pluginId, setPluginId,
+  hasCustomUsecase, setHasCustomUsecase,
+  existingTsv, setExistingTsv, existingVrlContent, setExistingVrlContent,
+  setVrlContent, onImportTsv,
+}: {
+  group: string; setGroup: (v: string) => void;
+  indexName: string; setIndexName: (v: string) => void;
+  pluginId: number; setPluginId: (v: number) => void;
+  hasCustomUsecase: boolean; setHasCustomUsecase: (v: boolean) => void;
+  existingTsv: string; setExistingTsv: (v: string) => void;
+  existingVrlContent: string; setExistingVrlContent: (v: string) => void;
+  setVrlContent: (v: string) => void;
+  onImportTsv: () => void;
+}) {
+  return (
+    <div className="max-w-2xl mx-auto space-y-6">
+      <div>
+        <h2 className="text-xl font-bold text-white mb-1">Project Setup</h2>
+        <p className="text-sm text-gray-400">Define the basic parameters for your DSIEM directive group.</p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-xs text-gray-400 mb-1">Group Name *</label>
+          <input value={group} onChange={(e) => setGroup(e.target.value)}
+            className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm text-white focus:border-blue-500 focus:outline-none"
+            placeholder="e.g. secdev" />
+        </div>
+        <div>
+          <label className="block text-xs text-gray-400 mb-1">Plugin ID *</label>
+          <input type="number" value={pluginId} onChange={(e) => setPluginId(Number(e.target.value))}
+            className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm text-white focus:border-blue-500 focus:outline-none"
+            placeholder="e.g. 45572" />
+        </div>
+        <div className="col-span-2">
+          <label className="block text-xs text-gray-400 mb-1">Index Name *</label>
+          <input value={indexName} onChange={(e) => setIndexName(e.target.value)}
+            className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm text-white focus:border-blue-500 focus:outline-none"
+            placeholder="e.g. wazuh, imperva, google-workspace" />
+        </div>
+      </div>
+
+      <div className="rounded-lg border border-gray-700 p-4 bg-gray-900">
+        <label className="flex items-center gap-3 cursor-pointer">
+          <div
+            className={`w-11 h-6 rounded-full relative transition-colors ${hasCustomUsecase ? "bg-blue-600" : "bg-gray-700"}`}
+            onClick={() => setHasCustomUsecase(!hasCustomUsecase)}
+          >
+            <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${hasCustomUsecase ? "translate-x-6" : "translate-x-1"}`} />
+          </div>
+          <div>
+            <div className="text-sm font-medium text-white">Custom Usecase (60_custom-filter)</div>
+            <div className="text-xs text-gray-400">Enable if log source needs custom VRL usecase tagging logic</div>
+          </div>
+        </label>
+      </div>
+
+      {hasCustomUsecase && (
+        <div className="space-y-4 rounded-lg border border-blue-800 bg-blue-950/30 p-4">
+          <div className="flex items-start gap-2 text-blue-300 text-sm">
+            <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+            <span>Jika sudah ada custom usecase yang perlu dilanjutkan, jalankan perintah berikut di server dan paste hasilnya di bawah:</span>
+          </div>
+          <div className="bg-gray-900 rounded p-3 text-xs font-mono text-green-400 border border-gray-700">
+            <div>cat /root/data/mgmt/kubeappl/vector-parser/configs/<span className="text-yellow-300">{indexName}</span>/60_custom-filter_<span className="text-yellow-300">{group}</span>.vrl</div>
+            <div className="mt-1">cat /etc/dsiem-plugin-tsv/<span className="text-yellow-300">{group}</span>_plugin-sids.tsv</div>
+          </div>
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Existing plugin-sids.tsv (optional — paste to continue)</label>
+            <textarea value={existingTsv} onChange={(e) => setExistingTsv(e.target.value)} rows={4}
+              className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-xs font-mono text-gray-300 focus:border-blue-500 focus:outline-none resize-none"
+              placeholder={"plugin\tid\tsid\ttitle\tcategory\tkingdom\nmygroup\t45572\t1\tUsecase title..."} />
+            {existingTsv && (
+              <button onClick={onImportTsv} className="mt-1 text-xs text-blue-400 hover:text-blue-300">
+                → Import into Usecase Table
+              </button>
+            )}
+          </div>
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Existing 60_custom-filter VRL (optional — paste to continue)</label>
+            <textarea value={existingVrlContent}
+              onChange={(e) => { setExistingVrlContent(e.target.value); setVrlContent(e.target.value); }}
+              rows={6}
+              className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-xs font-mono text-gray-300 focus:border-blue-500 focus:outline-none resize-none"
+              placeholder="# existing VRL content..." />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
