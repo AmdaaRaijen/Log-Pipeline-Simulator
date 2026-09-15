@@ -58,7 +58,7 @@ export function StepSetup({
           </label>
           <input
             type="number"
-            value={pluginId}
+            value={pluginId || ""}
             onChange={(e) => setPluginId(Number(e.target.value))}
             className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm text-white focus:border-blue-500 focus:outline-none"
             placeholder="e.g. 45572"
