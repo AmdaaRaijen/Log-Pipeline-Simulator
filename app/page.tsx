@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import MonacoEditor from "../components/editor/MonacoEditor";
 import ResultPanel from "../components/simulator/ResultPanel";
 import type { SimulationResult } from "../lib/evaluator/engine";
-import { Bot, Play, Wand2 } from "lucide-react";
+import { Bot, Play, Wand2, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { formatCode } from "../lib/utils/formatter";
 
@@ -162,6 +162,13 @@ export default function Home() {
             >
               <Bot className="h-4 w-4" />
               <span>Auto Whitelist Creator</span>
+            </Link>
+            <Link
+              href="/directive-creator"
+              className="flex items-center space-x-2 text-gray-400 hover:text-white hover:bg-gray-800 px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
+            >
+              <ShieldAlert className="h-4 w-4" />
+              <span>Directive Creator</span>
             </Link>
           </nav>
         </div>
