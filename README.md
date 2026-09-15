@@ -50,6 +50,22 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to use the simulator.
 
+### Running with Docker Compose
+
+You can easily build and run the application using Docker Compose. Ensure you have your `.env` file configured.
+
+```bash
+docker-compose up -d
+```
+
+The simulator will be available at [http://localhost:3000](http://localhost:3000).
+
+To stop the application:
+
+```bash
+docker-compose down
+```
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
