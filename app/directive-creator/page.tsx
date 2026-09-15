@@ -109,17 +109,35 @@ export default function DirectiveCreator() {
     return tsv
       .trim()
       .split("\n")
-      .filter((l) => l && !l.startsWith("plugin\t"))
+      .filter((l) => l && !l.toLowerCase().startsWith("plugin"))
       .map((line, i) => {
-        const p = line.split("\t");
+        let p = line.split("\t");
+        
+        // If there are no tabs, try to parse space-aligned terminal output
+        if (p.length < 4) {
+          // Split by 2 or more spaces first
+          p = line.split(/\s{2,}/);
+          
+          // If still not parsed well, try regex for: plugin id sid title category kingdom
+          if (p.length < 4) {
+            const match = line.match(/^(\S+)\s+(\d+)\s+(\d+)\s+(.+?)\s+([A-Za-z\s]+?)\s+([A-Za-z\s]+)$/);
+            if (match) {
+              p = [match[1], match[2], match[3], match[4], match[5], match[6]];
+            } else {
+              // Last resort: simple space split
+              p = line.split(/\s+/);
+            }
+          }
+        }
+
         return {
           id: genId(),
           plugin: p[0] || group,
           pluginId: Number(p[1]) || pluginId,
           sid: Number(p[2]) || i + 1,
-          title: p[3] || "",
-          category: p[4] || MITRE_TACTICS[0],
-          kingdom: p[5] || MITRE_KINGDOMS[0],
+          title: p[3] ? p[3].trim() : "",
+          category: p[4] ? p[4].trim() : MITRE_TACTICS[0],
+          kingdom: p[5] ? p[5].trim() : MITRE_KINGDOMS[0],
         };
       });
   };
@@ -282,13 +300,19 @@ export default function DirectiveCreator() {
   };
 
   const handleNext = () => {
-    if (step === 2 || (step === 1 && !hasCustomUsecase)) {
+    if (step === 0 && existingTsv.trim() && entries.length === 0) {
+      setEntries(parseTsvIntoEntries(existingTsv));
+    }
+
+    if (step === 2 && !hasCustomUsecase) {
       generateFiles();
       setStep(4);
     } else if (step === 3) {
       generateFiles();
       setStep(4);
-    } else setStep((s) => s + 1);
+    } else {
+      setStep((s) => s + 1);
+    }
   };
 
   const handleBack = () => {
@@ -313,10 +337,6 @@ export default function DirectiveCreator() {
           existingVrlContent={existingVrlContent}
           setExistingVrlContent={setExistingVrlContent}
           setVrlContent={setVrlContent}
-          onImportTsv={() => {
-            if (existingTsv.trim())
-              setEntries(parseTsvIntoEntries(existingTsv));
-          }}
         />
       );
     if (step === 1)
