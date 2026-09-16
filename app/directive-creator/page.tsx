@@ -347,6 +347,8 @@ export default function DirectiveCreator() {
           pluginId={pluginId}
           hasCustomUsecase={hasCustomUsecase}
           setEntries={setEntries}
+          yamlConfig={yamlConfig}
+          setYamlConfig={setYamlConfig}
         />
       );
     if (step === 2)

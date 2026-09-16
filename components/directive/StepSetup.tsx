@@ -77,6 +77,24 @@ export function StepSetup({
         </div>
       </div>
 
+      <div>
+        <label className="block text-xs text-gray-400 mb-1">
+          Existing plugin-sids.tsv (optional — paste to continue)
+        </label>
+        <div className="mb-2 text-xs font-mono text-green-400 bg-gray-900 p-2 rounded border border-gray-700">
+          cat /etc/dsiem-plugin-tsv/<span className="text-yellow-300">{group}</span>_plugin-sids.tsv
+        </div>
+        <textarea
+          value={existingTsv}
+          onChange={(e) => setExistingTsv(e.target.value)}
+          rows={4}
+          className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-xs font-mono text-gray-300 focus:border-blue-500 focus:outline-none resize-none"
+          placeholder={
+            "plugin\tid\tsid\ttitle\tcategory\tkingdom\nmygroup\t45572\t1\tUsecase title..."
+          }
+        />
+      </div>
+
       <div className="rounded-lg border border-gray-700 p-4 bg-gray-900">
         <label className="flex items-center gap-3 cursor-pointer">
           <div
@@ -114,24 +132,6 @@ export function StepSetup({
               /60_custom-filter_<span className="text-yellow-300">{group}</span>
               .vrl
             </div>
-            <div className="mt-1">
-              cat /etc/dsiem-plugin-tsv/
-              <span className="text-yellow-300">{group}</span>_plugin-sids.tsv
-            </div>
-          </div>
-          <div>
-            <label className="block text-xs text-gray-400 mb-1">
-              Existing plugin-sids.tsv (optional — paste to continue)
-            </label>
-            <textarea
-              value={existingTsv}
-              onChange={(e) => setExistingTsv(e.target.value)}
-              rows={4}
-              className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-xs font-mono text-gray-300 focus:border-blue-500 focus:outline-none resize-none"
-              placeholder={
-                "plugin\tid\tsid\ttitle\tcategory\tkingdom\nmygroup\t45572\t1\tUsecase title..."
-              }
-            />
           </div>
           <div>
             <label className="block text-xs text-gray-400 mb-1">
