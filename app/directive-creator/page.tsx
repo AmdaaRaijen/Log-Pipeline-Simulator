@@ -114,35 +114,44 @@ export default function DirectiveCreator() {
       .split("\n")
       .filter((l) => l && !l.toLowerCase().startsWith("plugin"))
       .map((line, i) => {
-        let p = line.split("\t");
-
-        // If there are no tabs, try to parse space-aligned terminal output
-        if (p.length < 4) {
-          // Split by 2 or more spaces first
-          p = line.split(/\s{2,}/);
-
-          // If still not parsed well, try regex for: plugin id sid title category kingdom
-          if (p.length < 4) {
-            const match = line.match(
-              /^(\S+)\s+(\d+)\s+(\d+)\s+(.+?)\s+([A-Za-z\s]+?)\s+([A-Za-z\s]+)$/,
-            );
-            if (match) {
-              p = [match[1], match[2], match[3], match[4], match[5], match[6]];
-            } else {
-              // Last resort: simple space split
-              p = line.split(/\s+/);
-            }
-          }
+        // Check if it's a standard TSV with multiple columns
+        const p = line.split("\t");
+        if (p.length >= 4) {
+          return {
+            id: genId(),
+            plugin: p[0] || group,
+            pluginId: Number(p[1]) || pluginId,
+            sid: Number(p[2]) || i + 1,
+            title: p[3] ? p[3].trim() : "",
+            category: p[4] ? p[4].trim() : MITRE_TACTICS[0],
+            kingdom: p[5] ? p[5].trim() : MITRE_KINGDOMS[0],
+          };
         }
 
+        // Try regex for space-aligned terminal output: plugin id sid title category kingdom
+        const match = line.match(/^(\S+)\s+(\d+)\s+(\d+)\s+(.+?)\s{2,}([A-Za-z\s]+?)\s{2,}([A-Za-z\s]+)$/);
+        if (match) {
+          return {
+            id: genId(),
+            plugin: match[1],
+            pluginId: Number(match[2]),
+            sid: Number(match[3]),
+            title: match[4].trim(),
+            category: match[5].trim(),
+            kingdom: match[6].trim(),
+          };
+        }
+
+        // If it doesn't match a full TSV or terminal format, 
+        // treat the ENTIRE LINE as just the title.
         return {
           id: genId(),
-          plugin: p[0] || group,
-          pluginId: Number(p[1]) || pluginId,
-          sid: Number(p[2]) || i + 1,
-          title: p[3] ? p[3].trim() : "",
-          category: p[4] ? p[4].trim() : MITRE_TACTICS[0],
-          kingdom: p[5] ? p[5].trim() : MITRE_KINGDOMS[0],
+          plugin: group,
+          pluginId: pluginId,
+          sid: i + 1, // Will be recalculated in generateFiles if appending to existing
+          title: line.trim(),
+          category: MITRE_TACTICS[0],
+          kingdom: MITRE_KINGDOMS[0],
         };
       });
   };
