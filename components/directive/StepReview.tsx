@@ -4,15 +4,19 @@ import MonacoEditor from "../editor/MonacoEditor";
 import { CopyButton } from "./CopyButton";
 import { Save } from "lucide-react";
 import type { DirectiveProject } from "../../lib/directive/types";
+import { getDeploymentPaths, type OsType } from "../../lib/directive/paths";
 
 export function StepReview({
-  group, indexName, files, activeTab, setActiveTab, onSave,
+  group, indexName, files, activeTab, setActiveTab, onSave, osType,
 }: {
   group: string; indexName: string;
   files: DirectiveProject["generatedFiles"];
   activeTab: number; setActiveTab: (i: number) => void;
   onSave: () => void;
+  osType: OsType;
 }) {
+  const paths = getDeploymentPaths(osType, group, indexName);
+
   const fileList = [
     { label: `${group}_plugin-sids.tsv`, content: files.pluginSidsTsv, lang: "plaintext" },
     { label: `directives_dsiem-backend-0_${group}.json`, content: files.directiveJson, lang: "json" },
@@ -57,11 +61,11 @@ export function StepReview({
       </div>
 
       <div className="rounded-lg border border-gray-700 bg-gray-900 p-4 text-xs text-gray-400 space-y-1">
-        <div className="text-gray-300 font-semibold mb-2">📋 Deployment Checklist</div>
-        <div>1. Copy <span className="text-yellow-300 font-mono">{group}_plugin-sids.tsv</span> → <span className="font-mono">/root/data/nfs/pvc-&#123;uuid&#125;/dsiem-plugin-tsv/</span></div>
-        <div>2. Deploy <span className="text-yellow-300 font-mono">directives_dsiem-backend-0_{group}.json</span> → dsiem-frontend pod: <span className="font-mono">dsiem/configs/</span></div>
-        <div>3. Deploy <span className="text-yellow-300 font-mono">70_dsiem-plugin_{group}.yaml</span> → <span className="font-mono">/root/data/mgmt/kubeappl/vector-parser/configs/{indexName}/</span></div>
-        {files.customVrl60 && <div>4. Deploy <span className="text-yellow-300 font-mono">60_custom-filter_{group}.vrl</span> → same vector-parser configs folder</div>}
+        <div className="text-gray-300 font-semibold mb-2">📋 Deployment Checklist ({osType.toUpperCase()} OS)</div>
+        <div>1. Copy <span className="text-yellow-300 font-mono">{paths.tsv.file}</span> → <span className="font-mono">{paths.tsv.dest}</span></div>
+        <div>2. Deploy <span className="text-yellow-300 font-mono">{paths.json.file}</span> → <span className="font-mono">{paths.json.dest}</span></div>
+        <div>3. Deploy <span className="text-yellow-300 font-mono">{paths.yaml.file}</span> → <span className="font-mono">{paths.yaml.dest}</span></div>
+        {files.customVrl60 && <div>4. Deploy <span className="text-yellow-300 font-mono">{paths.vrl.file}</span> → same vector-parser configs folder</div>}
         <div className="pt-1">5. Restart: <span className="font-mono">kubectl delete pod vector-parser{"<Tab>"}; kubectl delete pod -l app=dsiem-backend</span></div>
       </div>
     </div>

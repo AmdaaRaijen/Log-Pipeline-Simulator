@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import { AlertTriangle } from "lucide-react";
+import { getDeploymentPaths, type OsType } from "../../lib/directive/paths";
 
 export function StepSetup({
   group,
@@ -9,6 +10,8 @@ export function StepSetup({
   setIndexName,
   pluginId,
   setPluginId,
+  osType,
+  setOsType,
   hasCustomUsecase,
   setHasCustomUsecase,
   existingTsv,
@@ -23,6 +26,8 @@ export function StepSetup({
   setIndexName: (v: string) => void;
   pluginId: number;
   setPluginId: (v: number) => void;
+  osType: OsType;
+  setOsType: (v: OsType) => void;
   hasCustomUsecase: boolean;
   setHasCustomUsecase: (v: boolean) => void;
   existingTsv: string;
@@ -31,6 +36,8 @@ export function StepSetup({
   setExistingVrlContent: (v: string) => void;
   setVrlContent: (v: string) => void;
 }) {
+  const paths = getDeploymentPaths(osType, group, indexName);
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
@@ -38,6 +45,18 @@ export function StepSetup({
         <p className="text-sm text-gray-400">
           Define the basic parameters for your DSIEM directive group.
         </p>
+      </div>
+
+      <div className="flex gap-4 mb-2 bg-gray-900 border border-gray-800 p-3 rounded-lg">
+        <span className="text-sm font-medium text-gray-400">Target Environment:</span>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input type="radio" checked={osType === "talos"} onChange={() => setOsType("talos")} className="accent-blue-500" />
+          <span className="text-sm text-gray-300">Talos OS</span>
+        </label>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input type="radio" checked={osType === "centos"} onChange={() => setOsType("centos")} className="accent-blue-500" />
+          <span className="text-sm text-gray-300">Centos OS</span>
+        </label>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -82,7 +101,10 @@ export function StepSetup({
           Existing plugin-sids.tsv (optional — paste to continue)
         </label>
         <div className="mb-2 text-xs font-mono text-green-400 bg-gray-900 p-2 rounded border border-gray-700">
-          cat /etc/dsiem-plugin-tsv/<span className="text-yellow-300">{group}</span>_plugin-sids.tsv
+          {paths.tsv.search && (
+            <div className="text-gray-500"># {paths.tsv.search}</div>
+          )}
+          <div>cat {paths.tsv.dest}<span className="text-yellow-300">{group}</span>_plugin-sids.tsv</div>
         </div>
         <textarea
           value={existingTsv}
@@ -127,10 +149,7 @@ export function StepSetup({
           </div>
           <div className="bg-gray-900 rounded p-3 text-xs font-mono text-green-400 border border-gray-700">
             <div>
-              cat /root/data/mgmt/kubeappl/vector-parser/configs/
-              <span className="text-yellow-300">{indexName}</span>
-              /60_custom-filter_<span className="text-yellow-300">{group}</span>
-              .vrl
+              cat {paths.vrl.dest}60_custom-filter_<span className="text-yellow-300">{group}</span>.vrl
             </div>
           </div>
           <div>

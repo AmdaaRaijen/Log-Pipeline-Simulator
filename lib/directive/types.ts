@@ -6,6 +6,23 @@ export interface PluginSidEntry {
   title: string; // exact match key
   category: string; // MITRE ATT&CK tactic
   kingdom: string; // MITRE ATT&CK phase
+  rulesOverride?: StageRule[];
+}
+
+export interface StageRule {
+  stage: number;
+  occurrence: number;
+  reliability: number;
+  timeout: number;
+  from: string;
+  to: string;
+  port_from: string;
+  port_to: string;
+  protocol: string;
+  type: string;
+  custom_data1: string;
+  custom_data2: string;
+  custom_data3: string;
 }
 
 export interface YamlConfig {

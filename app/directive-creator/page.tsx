@@ -11,6 +11,8 @@ import {
 import { StepSetup } from "../../components/directive/StepSetup";
 import { StepUsecaseTable } from "../../components/directive/StepUsecaseTable";
 import { StepYamlConfig } from "../../components/directive/StepYamlConfig";
+
+import type { OsType } from "../../lib/directive/paths";
 import { StepVrlFilter } from "../../components/directive/StepVrlFilter";
 import { StepReview } from "../../components/directive/StepReview";
 import { FileViewer } from "../../components/directive/FileViewer";
@@ -59,6 +61,7 @@ export default function DirectiveCreator() {
   const [hasCustomUsecase, setHasCustomUsecase] = useState(false);
   const [existingTsv, setExistingTsv] = useState("");
   const [existingVrlContent, setExistingVrlContent] = useState("");
+  const [osType, setOsType] = useState<OsType>("talos");
 
   // Step 1 state
   const [entries, setEntries] = useState<PluginSidEntry[]>([]);
@@ -68,7 +71,7 @@ export default function DirectiveCreator() {
     tsvFileName: "secdev_plugin-sids",
     indexName: "wazuh",
     filterFieldName: ".rule.name",
-    refererField: ".rule.name",
+    refererField: ".usecase.title_name",
     customData: [{ label: "Action", field: ".action" }],
   });
 
@@ -112,15 +115,17 @@ export default function DirectiveCreator() {
       .filter((l) => l && !l.toLowerCase().startsWith("plugin"))
       .map((line, i) => {
         let p = line.split("\t");
-        
+
         // If there are no tabs, try to parse space-aligned terminal output
         if (p.length < 4) {
           // Split by 2 or more spaces first
           p = line.split(/\s{2,}/);
-          
+
           // If still not parsed well, try regex for: plugin id sid title category kingdom
           if (p.length < 4) {
-            const match = line.match(/^(\S+)\s+(\d+)\s+(\d+)\s+(.+?)\s+([A-Za-z\s]+?)\s+([A-Za-z\s]+)$/);
+            const match = line.match(
+              /^(\S+)\s+(\d+)\s+(\d+)\s+(.+?)\s+([A-Za-z\s]+?)\s+([A-Za-z\s]+)$/,
+            );
             if (match) {
               p = [match[1], match[2], match[3], match[4], match[5], match[6]];
             } else {
@@ -337,6 +342,8 @@ export default function DirectiveCreator() {
           existingVrlContent={existingVrlContent}
           setExistingVrlContent={setExistingVrlContent}
           setVrlContent={setVrlContent}
+          osType={osType}
+          setOsType={setOsType}
         />
       );
     if (step === 1)
@@ -385,6 +392,7 @@ export default function DirectiveCreator() {
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           onSave={handleSaveProject}
+          osType={osType}
         />
       );
     return null;
@@ -433,7 +441,11 @@ export default function DirectiveCreator() {
 
         <div className="flex-1 flex flex-col overflow-hidden">
           {viewingFile ? (
-            <FileViewer {...viewingFile} onClose={() => setViewingFile(null)} />
+            <FileViewer
+              {...viewingFile}
+              onClose={() => setViewingFile(null)}
+              osType={osType}
+            />
           ) : (
             <>
               <div className="p-5 pb-3 border-b border-gray-800 bg-gray-950 flex-shrink-0">

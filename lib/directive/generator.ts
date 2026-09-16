@@ -11,24 +11,31 @@ export function generateDirectiveJSON(entries: PluginSidEntry[], group: string) 
       { occurrence: 100000, reliability: 10, timeout: 86400, from: ":1" },
     ];
 
-    const rules = field_stages.map((stage, i) => ({
-      stage: i + 1,
-      name: entry.title,
-      plugin_id: entry.pluginId,
-      plugin_sid: [entry.sid],
-      occurrence: stage.occurrence,
-      reliability: stage.reliability,
-      timeout: stage.timeout,
-      from: stage.from,
-      to: "ANY",
-      port_from: "ANY",
-      port_to: "ANY",
-      protocol: "ANY",
-      type: "PluginRule",
-      custom_data1: "ANY",
-      custom_data2: "ANY",
-      custom_data3: "ANY",
-    }));
+    const rules = entry.rulesOverride
+      ? entry.rulesOverride.map((r) => ({
+          ...r,
+          name: entry.title,
+          plugin_id: entry.pluginId,
+          plugin_sid: [entry.sid],
+        }))
+      : field_stages.map((stage, i) => ({
+          stage: i + 1,
+          name: entry.title,
+          plugin_id: entry.pluginId,
+          plugin_sid: [entry.sid],
+          occurrence: stage.occurrence,
+          reliability: stage.reliability,
+          timeout: stage.timeout,
+          from: stage.from,
+          to: "ANY",
+          port_from: "ANY",
+          port_to: "ANY",
+          protocol: "ANY",
+          type: "PluginRule",
+          custom_data1: "ANY",
+          custom_data2: "ANY",
+          custom_data3: "ANY",
+        }));
 
     return {
       id: directive_id,

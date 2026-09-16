@@ -3,41 +3,48 @@ import React from "react";
 import MonacoEditor from "../editor/MonacoEditor";
 import { CopyButton } from "./CopyButton";
 import { ArrowLeft, Info } from "lucide-react";
+import { getDeploymentPaths, type OsType } from "../../lib/directive/paths";
 
 export function FileViewer({
   name,
   content,
   language,
   onClose,
+  osType,
 }: {
   name: string;
   content: string;
   language: string;
   onClose: () => void;
+  osType: OsType;
 }) {
+  const paths = getDeploymentPaths(
+    osType,
+    name.split("_")[0] || "",
+    "{device}",
+  );
+
   const getHelp = () => {
     if (name.endsWith(".tsv"))
       return {
         purpose: "Enrichment table mapping title → plugin_id + plugin_sid",
-        destination: "/mnt/NAS/dsiem-plugin-tsv",
+        destination: paths.tsv.dest,
       };
     if (name.endsWith(".json"))
       return {
         purpose: "Directive rules consumed by DSIEM backend",
-        destination: "dsiem-frontend pod: dsiem/configs/",
+        destination: paths.json.dest,
       };
     if (name.endsWith(".yaml"))
       return {
         purpose:
           "Vector transform that normalizes events and looks up plugin_sid",
-        destination:
-          "Vector parser: /root/data/mgmt/kubeappl/vector-parser/configs/{device}/",
+        destination: `${paths.yaml.dest}`,
       };
     if (name.endsWith(".vrl"))
       return {
         purpose: "Custom usecase tagging (optional)",
-        destination:
-          "Vector parser: /root/data/mgmt/kubeappl/vector-parser/configs/{device}/",
+        destination: `${paths.vrl.dest}`,
       };
     return null;
   };

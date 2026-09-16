@@ -1,7 +1,8 @@
 "use client";
-import React from "react";
-import { Plus, Trash2 } from "lucide-react";
+import React, { useState } from "react";
+import { Plus, Trash2, Pencil } from "lucide-react";
 import type { PluginSidEntry } from "../../lib/directive/types";
+import { DirectiveEditModal } from "./DirectiveEditModal";
 
 export const MITRE_TACTICS = [
   "Initial Access", "Execution", "Persistence", "Privilege Escalation",
@@ -31,6 +32,8 @@ export function UsecaseTable({
   pluginId: number;
   onChange: (entries: PluginSidEntry[]) => void;
 }) {
+  const [editingId, setEditingId] = useState<string | null>(null);
+
   const addRow = () => {
     const nextSid = entries.length > 0 ? Math.max(...entries.map((e) => e.sid)) + 1 : 1;
     onChange([
@@ -64,7 +67,12 @@ export function UsecaseTable({
           <tbody>
             {entries.map((entry, idx) => (
               <tr key={entry.id} className={`border-t border-gray-700 ${idx % 2 === 0 ? "bg-gray-900" : "bg-gray-950"}`}>
-                <td className="px-3 py-1.5 text-gray-400 font-mono text-center">{entry.sid}</td>
+                <td className="px-3 py-1.5 text-gray-400 font-mono text-center">
+                  {entry.sid}
+                  {entry.rulesOverride && (
+                    <span className="ml-1 text-blue-400 text-xs" title="Custom rules applied">●</span>
+                  )}
+                </td>
                 <td className="px-3 py-1.5">
                   <input
                     value={entry.title}
@@ -91,8 +99,15 @@ export function UsecaseTable({
                     {MITRE_KINGDOMS.map((k) => <option key={k} value={k}>{k}</option>)}
                   </select>
                 </td>
-                <td className="px-3 py-1.5">
-                  <button onClick={() => removeRow(entry.id)} className="text-red-500 hover:text-red-400">
+                <td className="px-3 py-1.5 flex items-center gap-2">
+                  <button
+                    onClick={() => setEditingId(entry.id)}
+                    className="text-gray-400 hover:text-blue-400 transition-colors"
+                    title="Edit directive rules"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                  <button onClick={() => removeRow(entry.id)} className="text-red-500 hover:text-red-400 transition-colors">
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </td>
@@ -104,12 +119,26 @@ export function UsecaseTable({
           </tbody>
         </table>
       </div>
-      <button
-        onClick={addRow}
-        className="self-start flex items-center gap-2 text-sm text-blue-400 hover:text-white hover:bg-gray-800 px-3 py-1.5 rounded-md transition-colors"
-      >
-        <Plus className="h-4 w-4" /> Add Row
-      </button>
+      <div>
+        <button onClick={addRow} className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-blue-700 hover:bg-blue-600 rounded-md transition-colors">
+          <Plus className="h-4 w-4" /> Add Row
+        </button>
+      </div>
+
+      {editingId && (() => {
+        const entry = entries.find((e) => e.id === editingId);
+        if (!entry) return null;
+        return (
+          <DirectiveEditModal
+            entry={entry}
+            onSave={(updated) => {
+              onChange(entries.map((e) => (e.id === updated.id ? updated : e)));
+              setEditingId(null);
+            }}
+            onClose={() => setEditingId(null)}
+          />
+        );
+      })()}
     </div>
   );
 }
