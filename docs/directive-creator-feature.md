@@ -18,15 +18,17 @@ The primary goals of this tool are:
 
 ### 1. Project Setup (Step 0)
 The setup phase captures the foundational parameters:
-- **Group Name**: The directive's group identifier (e.g., `secdev`, `imperva`).
+- **Group Name**: The directive's group identifier (e.g., `secdev`, `imperva`). The input features a **Smart Autocomplete** backed by a local SQLite database, allowing users to search standardized group names. Selecting a recommendation automatically fills the correct Plugin ID to prevent ID collisions.
 - **Plugin ID**: The overarching plugin base ID (e.g., `45572`). Directive IDs will be mathematically derived from this ID.
 - **Index Name**: The name of the Elasticsearch / OpenSearch index where the logs reside.
-- **Custom Usecase Toggle**: An option indicating whether the log source requires a custom `60_custom-filter.vrl` script. If the source already has one in production, you can import the existing `.tsv` and `.vrl` here to continue developing from where you left off.
+- **Referer Field (lookup key)**: Defines the JSON path used to match the usecase (e.g., `.usecase.title_name`), defaulting to standard fields.
+- **Custom Usecase Toggle**: An option indicating whether the log source requires a custom `60_custom-filter.vrl` script.
+- **Existing TSV Import**: Always available as an optional field. Users can import existing `.tsv` files to continue developing from where they left off. The importer is smart enough to handle **single-column "Title-only" TSV files**, accommodating quick exports directly from Kibana visualizers.
 
 ### 2. Usecase Table (Step 1)
 Here, users manage the specific Use Cases (SIDs) tied to the `Plugin ID`.
 - Users map `sid` to a specific **Title**, **MITRE Tactic**, and **MITRE Kingdom**.
-- The `Title` field strictly determines the lookup key against the parsed log (`.rule.name` or `.usecase.title_name`).
+- The `Title` field strictly determines the lookup key against the parsed log based on the **Referer Field** configured in Step 0.
 - Auto-imported TSVs from Step 0 will populate here automatically.
 
 ### 3. YAML Configuration (Step 2)
@@ -48,4 +50,8 @@ Provides a final consolidated view of all generated files:
 3. `70_dsiem-plugin_{group}.yaml`
 4. `60_custom-filter_{group}.vrl` (Optional)
 
-The tool includes a handy **Deployment Checklist** illustrating exactly where each file must be copied to within the Kubernetes cluster, reducing deployment errors. You can also click **Save Project** to persist your progress locally.
+**Key Features in Review Step:**
+- **OS Path Toggler**: A global toggle that instantly switches the file deployment paths between **Talos OS** and **Centos OS** conventions.
+- **Form-Based Rule Overrides**: Instead of editing raw JSON arrays, users can click **Edit** on any directive to open a sleek 3-column form UI. This makes customizing specific rule attributes (like `custom_data1` mapping or severity) intuitive and error-free.
+
+The tool includes a handy **Deployment Checklist** illustrating exactly where each file must be copied to within the Kubernetes cluster, reducing deployment errors based on your selected OS. You can also click **Save Project** to persist your progress locally.
