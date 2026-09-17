@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { AlertTriangle } from "lucide-react";
 import { getDeploymentPaths, type OsType } from "../../lib/directive/paths";
 
@@ -37,6 +37,18 @@ export function StepSetup({
   setVrlContent: (v: string) => void;
 }) {
   const paths = getDeploymentPaths(osType, group, indexName);
+  
+  const [plugins, setPlugins] = useState<any[]>([]);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/directive/plugins")
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) setPlugins(data);
+      })
+      .catch((err) => console.error("Failed to load plugins", err));
+  }, []);
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -60,16 +72,42 @@ export function StepSetup({
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div>
+        <div className="relative">
           <label className="block text-xs text-gray-400 mb-1">
             Group Name *
           </label>
           <input
             value={group}
-            onChange={(e) => setGroup(e.target.value)}
+            onChange={(e) => { setGroup(e.target.value); setIsDropdownOpen(true); }}
+            onFocus={() => setIsDropdownOpen(true)}
+            onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
             className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm text-white focus:border-blue-500 focus:outline-none"
             placeholder="e.g. secdev"
           />
+          {isDropdownOpen && plugins.length > 0 && (
+            <div className="absolute z-10 w-full mt-1 bg-gray-900 border border-gray-700 rounded-md shadow-2xl max-h-60 overflow-y-auto">
+              {plugins
+                .filter((p) =>
+                  p.siem_plugin_type.toLowerCase().includes(group.toLowerCase())
+                )
+                .map((p) => (
+                  <div
+                    key={p.plugin_id}
+                    className="px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 cursor-pointer border-b border-gray-800 flex flex-col"
+                    onClick={() => {
+                      setGroup(p.siem_plugin_type);
+                      setPluginId(p.plugin_id);
+                      setIsDropdownOpen(false);
+                    }}
+                  >
+                    <span className="font-semibold">{p.siem_plugin_type || p.filter}</span>
+                    <span className="text-[10px] text-gray-500 font-mono">
+                      ID: <span className="text-blue-400">{p.plugin_id}</span> | By: {p.by}
+                    </span>
+                  </div>
+                ))}
+            </div>
+          )}
         </div>
         <div>
           <label className="block text-xs text-gray-400 mb-1">
