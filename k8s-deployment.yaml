@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pipeline-simulator
+  labels:
+    app: pipeline-simulator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pipeline-simulator
+  template:
+    metadata:
+      labels:
+        app: pipeline-simulator
+    spec:
+      containers:
+        - name: pipeline-simulator
+          # Contoh dengan DockerHub, pastikan mengganti dengan username DockerHub Anda
+          image: docker.io/amda23/pipeline-simulator:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NODE_ENV
+              value: "production"
+          envFrom:
+            - secretRef:
+                name: pipeline-simulator-secret
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pipeline-simulator-secret
+type: Opaque
+stringData:
+  # Masukkan nilai dari .env Anda ke sini
+  OPENAI_API_KEY: "isi-dengan-api-key-anda"
+  OPENAI_BASE_URL: "https://api.openai.com/v1"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pipeline-simulator-svc
+spec:
+  selector:
+    app: pipeline-simulator
+  ports:
+    - protocol: TCP
+      port: 3000
+      targetPort: 3000
+      nodePort: 30000
+  # Menggunakan NodePort agar bisa diakses langsung dari IP Talos
+  type: NodePort

@@ -40,3 +40,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# AI Plans
+plan-siem-pipeline-simulator*.md
+
+# db
+plugins.db
