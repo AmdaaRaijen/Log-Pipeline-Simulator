@@ -86,7 +86,7 @@ transforms:
   filter_dsiem-plugin_CONFIG_ID:
     type: filter
     inputs:
-      - 98_output_to_dsiem_CONFIG_ID.siem_events
+      - 98_output_to_dsiem_{__INDEX_NAME__}.siem_events
     condition:
       type: "vrl"
       source: |-
